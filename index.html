@@ -317,7 +317,7 @@ const DATA = [
   {date:"2026-05-13",rawDate:"5/13/2026",created:"5/13/2026",lob:"FollowSpy",email:"duquaine.dylan93@gmail.com",plan:"Premium Weekly",status:"Cancelled",reason:"Declined Save offer",payment:"VISA",notes:"cx requested to cncel, declined save offers",reso:"Canceled",rep:"Ben",month:"05-2026",amount:14.99},
   {date:"2026-05-14",rawDate:"5/14/2026",created:"10/09/0206",lob:"RecentFollow",email:"melek-ktk-2011@hotmail.com",plan:"Elite V1 Weekly",status:"Cancelled",reason:"No longer needed",payment:"MC",notes:"cx requested to cncel, declined save offers",reso:"Canceled in Stripe",rep:"Roy",month:"05-2026",amount:29.99},
   {date:"2026-05-14",rawDate:"5/14/2026",created:"05/11/2026",lob:"FollowSpy",email:"Edgardavendanom@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"No longer needed",payment:"VISA",notes:"cx requested to cncel, declined save offers",reso:"Canceled",rep:"Roy",month:"05-2026",amount:9.99},
-  {date:"2026-05-14",rawDate:"5/14/2026",created:"04/28/2026",lob:"FollowSpy",email:"Catrinffionlewis@outlook.com",plan:"Starter Weekly",status:"Cancelled",reason:"No longer needed",payment:"ApplePay",notes:"cx requested to cancel, declined save offers",reso:"Canceled",rep:"Roy",month:"05-2026",amount:9.99},
+  {date:"2026-05-14",rawDate:"5/142026",created:"04/28/2026",lob:"FollowSpy",email:"Catrinffionlewis@outlook.com",plan:"Starter Weekly",status:"Cancelled",reason:"No longer needed",payment:"ApplePay",notes:"cx requested to cancel, declined save offers",reso:"Canceled",rep:"Roy",month:"05-2026",amount:9.99},
   {date:"2026-05-14",rawDate:"5/14/2026",created:"05/13/2026",lob:"FollowSpy",email:"chantelhumphreys@gmail.com",plan:"Premium Weekly",status:"Cancelled",reason:"Declined Save offer",payment:"ApplePay",notes:"cx requested to cancel, declined save offers",reso:"Canceled",rep:"Roy",month:"05-2026",amount:14.99},
   {date:"2026-05-14",rawDate:"5/14/2026",created:"05/13/2026",lob:"FollowSpy",email:"jayeshbaid7@gmail.com",plan:"Starter Quarterly",status:"Refunded",reason:"Service not as expected/Dissatisfied",payment:"VISA",notes:"cx accepted the term and prorated refund offered",reso:"Prorated Refund",rep:"Roy",month:"05-2026",amount:19.99},
   {date:"2026-05-14",rawDate:"05/14/2026",created:"04/05/2026",lob:"FollowSpy",email:"evolvewithin@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"No longer needed",payment:"Discover",notes:"cx requested to cancel, declined save offers",reso:"Canceled",rep:"Roy",month:"05-2026",amount:9.99},
@@ -485,7 +485,7 @@ function populateFilters() {
     vals.forEach(v => { const o=document.createElement('option'); o.value=o.textContent=v; sel.appendChild(o); });
   }
   // Set default date range
-  const dates = DATA.map(r=>r.date).filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)).sort();
+  const dates = DATA.map(r=>r.date).filter(Boolean).sort();
   if (dates.length) {
     document.getElementById('dateFrom').value = dates[0];
     document.getElementById('dateTo').value = dates[dates.length-1];
@@ -498,7 +498,7 @@ function resetFilters() {
   document.getElementById('filterReason').value='';
   document.getElementById('filterPayment').value='';
   document.getElementById('filterRep').value='';
-  const dates = DATA.map(r=>r.date).filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)).sort();
+  const dates = DATA.map(r=>r.date).filter(Boolean).sort();
   if (dates.length) {
     document.getElementById('dateFrom').value = dates[0];
     document.getElementById('dateTo').value = dates[dates.length-1];

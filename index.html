@@ -6,612 +6,512 @@
 <title>RF/FS Refund Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f2f5; color: #1a1a2e; }
-
-  header {
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-    color: white;
-    padding: 20px 30px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-  }
-  header h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: 0.5px; }
-  header p { font-size: 0.8rem; opacity: 0.7; margin-top: 2px; }
-  .header-badge { background: rgba(255,255,255,0.15); padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; }
-
-  .filters {
-    background: white;
-    padding: 16px 30px;
-    display: flex;
-    gap: 16px;
-    align-items: center;
-    flex-wrap: wrap;
-    border-bottom: 1px solid #e5e7eb;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-  }
-  .filter-group { display: flex; align-items: center; gap: 8px; }
-  .filter-group label { font-size: 0.8rem; font-weight: 600; color: #6b7280; white-space: nowrap; }
-  .filter-group input, .filter-group select {
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    padding: 7px 11px;
-    font-size: 0.85rem;
-    color: #374151;
-    background: #f9fafb;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-  .filter-group input:focus, .filter-group select:focus { border-color: #3b82f6; background: white; }
-  .btn {
-    padding: 8px 18px;
-    border-radius: 8px;
-    border: none;
-    font-size: 0.85rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .btn-primary { background: #3b82f6; color: white; }
-  .btn-primary:hover { background: #2563eb; }
-  .btn-reset { background: #f3f4f6; color: #6b7280; }
-  .btn-reset:hover { background: #e5e7eb; }
-  #result-count { font-size: 0.8rem; color: #9ca3af; margin-left: auto; }
-
-  .main { padding: 24px 30px; }
-
-  .kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 16px;
-    margin-bottom: 24px;
-  }
-  .kpi-card {
-    background: white;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
-    border-left: 4px solid;
-    position: relative;
-    overflow: hidden;
-  }
-  .kpi-card::after {
-    content: '';
-    position: absolute;
-    right: -10px; top: -10px;
-    width: 70px; height: 70px;
-    border-radius: 50%;
-    opacity: 0.06;
-  }
-  .kpi-card.blue { border-color: #3b82f6; }
-  .kpi-card.blue::after { background: #3b82f6; }
-  .kpi-card.green { border-color: #10b981; }
-  .kpi-card.green::after { background: #10b981; }
-  .kpi-card.orange { border-color: #f59e0b; }
-  .kpi-card.orange::after { background: #f59e0b; }
-  .kpi-card.purple { border-color: #8b5cf6; }
-  .kpi-card.purple::after { background: #8b5cf6; }
-  .kpi-card.red { border-color: #ef4444; }
-  .kpi-card.red::after { background: #ef4444; }
-  .kpi-label { font-size: 0.75rem; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
-  .kpi-value { font-size: 1.8rem; font-weight: 700; color: #1a1a2e; line-height: 1; }
-  .kpi-sub { font-size: 0.75rem; color: #9ca3af; margin-top: 6px; }
-
-  .charts-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-bottom: 24px;
-  }
-  .chart-card {
-    background: white;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
-  }
-  .chart-card.full { grid-column: 1 / -1; }
-  .chart-title { font-size: 0.9rem; font-weight: 700; color: #374151; margin-bottom: 16px; }
-  .chart-wrap { position: relative; height: 220px; }
-
-  .table-card {
-    background: white;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
-    overflow: hidden;
-  }
-  .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-  .table-title { font-size: 0.9rem; font-weight: 700; color: #374151; }
-  .table-wrap { overflow-x: auto; max-height: 480px; overflow-y: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-  thead tr { background: #f8fafc; position: sticky; top: 0; z-index: 1; }
-  th {
-    padding: 10px 12px;
-    text-align: left;
-    font-weight: 700;
-    color: #6b7280;
-    font-size: 0.72rem;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    border-bottom: 2px solid #e5e7eb;
-    cursor: pointer;
-    white-space: nowrap;
-    user-select: none;
-  }
-  th:hover { color: #3b82f6; }
-  td { padding: 10px 12px; border-bottom: 1px solid #f3f4f6; color: #374151; vertical-align: top; }
-  tr:hover td { background: #f8fafc; }
-  .badge {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    white-space: nowrap;
-  }
-  .badge-fs { background: #dbeafe; color: #1d4ed8; }
-  .badge-rf { background: #fce7f3; color: #9d174d; }
-  .badge-refunded { background: #d1fae5; color: #065f46; }
-  .badge-diff { background: #fef3c7; color: #92400e; }
-  .badge-prorated { background: #e0e7ff; color: #3730a3; }
-  .badge-50 { background: #fce7f3; color: #9d174d; }
-  .amount { font-weight: 700; color: #10b981; white-space: nowrap; }
-  .notes-cell { max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #6b7280; }
-  .sort-indicator { font-size: 0.65rem; opacity: 0.5; }
-
-  @media (max-width: 768px) {
-    .charts-grid { grid-template-columns: 1fr; }
-    .filters { flex-direction: column; align-items: flex-start; }
-    .main { padding: 16px; }
-  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh}
+  header{background:linear-gradient(135deg,#1e293b,#0f172a);padding:20px 28px;border-bottom:1px solid #334155;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+  header h1{font-size:1.4rem;font-weight:700;color:#f1f5f9;letter-spacing:-.3px}
+  header h1 span{color:#60a5fa}
+  .updated{font-size:.75rem;color:#64748b;margin-top:2px}
+  .filters{background:#1e293b;padding:16px 28px;border-bottom:1px solid #334155;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+  .filter-group{display:flex;flex-direction:column;gap:4px}
+  .filter-group label{font-size:.7rem;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+  .filter-group input,.filter-group select{background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:6px 10px;border-radius:6px;font-size:.8rem;outline:none;min-width:120px}
+  .filter-group input:focus,.filter-group select:focus{border-color:#60a5fa}
+  .filter-group input[type=date]{min-width:130px}
+  .btn-reset{background:#334155;color:#94a3b8;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:.8rem;height:32px;align-self:flex-end}
+  .btn-reset:hover{background:#475569;color:#e2e8f0}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;padding:20px 28px}
+  .kpi{background:#1e293b;border:1px solid #334155;border-radius:10px;padding:16px 18px}
+  .kpi .label{font-size:.7rem;color:#64748b;text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px}
+  .kpi .value{font-size:1.7rem;font-weight:700;color:#f1f5f9;line-height:1}
+  .kpi .sub{font-size:.72rem;color:#64748b;margin-top:4px}
+  .kpi.blue .value{color:#60a5fa}
+  .kpi.green .value{color:#34d399}
+  .kpi.purple .value{color:#a78bfa}
+  .kpi.orange .value{color:#fb923c}
+  .charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;padding:0 28px 20px}
+  .chart-card{background:#1e293b;border:1px solid #334155;border-radius:10px;padding:18px}
+  .chart-card h3{font-size:.8rem;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:14px}
+  .chart-wrap{position:relative;height:200px}
+  .table-section{padding:0 28px 28px}
+  .table-section h3{font-size:.8rem;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:12px}
+  .table-wrap{overflow-x:auto;border:1px solid #334155;border-radius:10px}
+  table{width:100%;border-collapse:collapse;font-size:.78rem}
+  th{background:#1e293b;color:#64748b;font-weight:600;padding:10px 12px;text-align:left;white-space:nowrap;border-bottom:1px solid #334155;position:sticky;top:0;cursor:pointer;user-select:none}
+  th:hover{color:#94a3b8}
+  td{padding:9px 12px;border-bottom:1px solid #1e293b;color:#cbd5e1;white-space:nowrap;max-width:240px;overflow:hidden;text-overflow:ellipsis}
+  tr:hover td{background:#1e293b}
+  tr:last-child td{border-bottom:none}
+  .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.68rem;font-weight:600;white-space:nowrap}
+  .badge-refunded{background:#064e3b;color:#34d399}
+  .badge-canceled{background:#1e1b4b;color:#818cf8}
+  .badge-escalated{background:#431407;color:#fb923c}
+  .badge-na{background:#1e293b;color:#64748b}
+  .badge-terminated{background:#1c1917;color:#a8a29e}
+  .badge-other{background:#172554;color:#93c5fd}
+  .lob-fs{background:#1e1b4b;color:#a78bfa;border-radius:20px;padding:2px 8px;font-size:.68rem;font-weight:600}
+  .lob-rf{background:#052e16;color:#4ade80;border-radius:20px;padding:2px 8px;font-size:.68rem;font-weight:600}
+  #count{color:#60a5fa;font-size:.78rem}
 </style>
 </head>
 <body>
-
 <header>
   <div>
-    <h1>📊 RF/FS Refund Tracker</h1>
-    <p>FollowSpy &amp; RecentFollow • Refund Dashboard</p>
+    <h1>RF/FS <span>Refund Dashboard</span></h1>
+    <div class="updated">PathSocial · RF/FS REFUND TRACKER</div>
   </div>
-  <div class="header-badge" id="last-updated"></div>
+  <div id="count"></div>
 </header>
-
 <div class="filters">
   <div class="filter-group">
     <label>Date From</label>
-    <input type="date" id="date-from">
+    <input type="date" id="dateFrom">
   </div>
   <div class="filter-group">
     <label>Date To</label>
-    <input type="date" id="date-to">
+    <input type="date" id="dateTo">
   </div>
   <div class="filter-group">
     <label>LOB</label>
-    <select id="filter-lob">
-      <option value="">All</option>
-      <option value="FollowSpy">FollowSpy</option>
-      <option value="RecentFollow">RecentFollow</option>
-    </select>
+    <select id="filterLob"><option value="">All</option><option>FollowSpy</option><option>RecentFollow</option></select>
   </div>
   <div class="filter-group">
     <label>Resolution</label>
-    <select id="filter-reso">
-      <option value="">All</option>
-    </select>
+    <select id="filterReso"><option value="">All</option></select>
   </div>
   <div class="filter-group">
-    <label>Done By</label>
-    <select id="filter-agent">
-      <option value="">All</option>
-    </select>
+    <label>Reason</label>
+    <select id="filterReason"><option value="">All</option></select>
   </div>
   <div class="filter-group">
     <label>Payment</label>
-    <select id="filter-payment">
-      <option value="">All</option>
-    </select>
+    <select id="filterPayment"><option value="">All</option></select>
   </div>
-  <button class="btn btn-primary" onclick="applyFilters()">Apply</button>
-  <button class="btn btn-reset" onclick="resetFilters()">Reset</button>
-  <span id="result-count"></span>
+  <div class="filter-group">
+    <label>Rep</label>
+    <select id="filterRep"><option value="">All</option></select>
+  </div>
+  <button class="btn-reset" onclick="resetFilters()">Reset</button>
 </div>
-
-<div class="main">
-  <div class="kpi-grid">
-    <div class="kpi-card blue">
-      <div class="kpi-label">Total Refunds</div>
-      <div class="kpi-value" id="kpi-count">—</div>
-      <div class="kpi-sub">transactions</div>
-    </div>
-    <div class="kpi-card green">
-      <div class="kpi-label">Total Amount</div>
-      <div class="kpi-value" id="kpi-total">—</div>
-      <div class="kpi-sub">refunded</div>
-    </div>
-    <div class="kpi-card orange">
-      <div class="kpi-label">FollowSpy</div>
-      <div class="kpi-value" id="kpi-fs">—</div>
-      <div class="kpi-sub" id="kpi-fs-amt"></div>
-    </div>
-    <div class="kpi-card purple">
-      <div class="kpi-label">RecentFollow</div>
-      <div class="kpi-value" id="kpi-rf">—</div>
-      <div class="kpi-sub" id="kpi-rf-amt"></div>
-    </div>
-    <div class="kpi-card red">
-      <div class="kpi-label">Avg Refund</div>
-      <div class="kpi-value" id="kpi-avg">—</div>
-      <div class="kpi-sub">per transaction</div>
-    </div>
-  </div>
-
-  <div class="charts-grid">
-    <div class="chart-card">
-      <div class="chart-title">Refunds by Reason/Issue</div>
-      <div class="chart-wrap"><canvas id="chart-reason"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <div class="chart-title">Resolution Type Breakdown</div>
-      <div class="chart-wrap"><canvas id="chart-reso"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <div class="chart-title">Refunds by Payment Method</div>
-      <div class="chart-wrap"><canvas id="chart-payment"></canvas></div>
-    </div>
-    <div class="chart-card">
-      <div class="chart-title">Daily Refund Volume ($)</div>
-      <div class="chart-wrap"><canvas id="chart-daily"></canvas></div>
-    </div>
-  </div>
-
-  <div class="table-card">
-    <div class="table-header">
-      <div class="table-title">All Refund Records</div>
-    </div>
-    <div class="table-wrap">
-      <table id="refund-table">
-        <thead>
-          <tr>
-            <th onclick="sortTable('date')">Date <span class="sort-indicator">▼</span></th>
-            <th onclick="sortTable('created')">Created</th>
-            <th onclick="sortTable('lob')">LOB</th>
-            <th onclick="sortTable('email')">Email</th>
-            <th onclick="sortTable('plan')">Plan</th>
-            <th onclick="sortTable('reason')">Reason/Issue</th>
-            <th onclick="sortTable('gateway')">Gateway</th>
-            <th onclick="sortTable('payment')">Payment</th>
-            <th onclick="sortTable('amount')">Amount</th>
-            <th onclick="sortTable('reso')">Resolution</th>
-            <th onclick="sortTable('agent')">Done By</th>
-            <th>Notes</th>
-          </tr>
-        </thead>
-        <tbody id="table-body"></tbody>
-      </table>
-    </div>
+<div class="kpis">
+  <div class="kpi blue"><div class="label">Total Cases</div><div class="value" id="kTotal">—</div><div class="sub" id="kSub">filtered</div></div>
+  <div class="kpi green"><div class="label">Refunded Cases</div><div class="value" id="kRefunded">—</div><div class="sub" id="kRefundedAmt"></div></div>
+  <div class="kpi purple"><div class="label">FollowSpy</div><div class="value" id="kFS">—</div><div class="sub" id="kFSSub"></div></div>
+  <div class="kpi orange"><div class="label">RecentFollow</div><div class="value" id="kRF">—</div><div class="sub" id="kRFSub"></div></div>
+  <div class="kpi"><div class="label">Canceled</div><div class="value" id="kCanceled">—</div><div class="sub">resolved</div></div>
+  <div class="kpi"><div class="label">Escalated</div><div class="value" id="kEscalated">—</div><div class="sub">cases</div></div>
+</div>
+<div class="charts">
+  <div class="chart-card"><h3>Reason / Issue</h3><div class="chart-wrap"><canvas id="chartReason"></canvas></div></div>
+  <div class="chart-card"><h3>Resolution</h3><div class="chart-wrap"><canvas id="chartReso"></canvas></div></div>
+  <div class="chart-card"><h3>Payment Method</h3><div class="chart-wrap"><canvas id="chartPayment"></canvas></div></div>
+  <div class="chart-card"><h3>Daily Volume</h3><div class="chart-wrap"><canvas id="chartDaily"></canvas></div></div>
+</div>
+<div class="table-section">
+  <h3>Records <span id="tableCount"></span></h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th onclick="sortBy('date')">Date ↕</th>
+        <th onclick="sortBy('lob')">LOB ↕</th>
+        <th onclick="sortBy('email')">Email ↕</th>
+        <th onclick="sortBy('plan')">Plan ↕</th>
+        <th onclick="sortBy('reason')">Reason ↕</th>
+        <th onclick="sortBy('payment')">Payment ↕</th>
+        <th onclick="sortBy('reso')">Resolution ↕</th>
+        <th onclick="sortBy('rep')">Rep ↕</th>
+        <th>Notes</th>
+      </tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
   </div>
 </div>
 
 <script>
-const RAW_DATA = [
-  {date:"2026-05-01",created:"2026-02-24",lob:"RecentFollow",email:"slamnsnacks@gmail.com",plan:"Expert Quarterly",reason:"Accidental upgrade quarterly",gateway:"OpenPay",payment:"Paypal",amount:72.01,reso:"Refunded",agent:"Ben",notes:"Rejected save offer, dispute threat",month:"05-2026"},
-  {date:"2026-05-01",created:"2026-05-01",lob:"RecentFollow",email:"caidence.crane2@yahoo.com",plan:"Expert Quarterly",reason:"Accidental reg quarterly",gateway:"OpenPay",payment:"VISA",amount:80.00,reso:"Refunded",agent:"Geal",notes:"Rejected save offer",month:"05-2026"},
-  {date:"2026-05-01",created:"2026-05-01",lob:"RecentFollow",email:"jaiden1g9002@gmail.com",plan:"Expert Weekly",reason:"Duplicate",gateway:"OpenPay",payment:"VISA",amount:8.00,reso:"Refunded",agent:"Jessica",notes:"Cx signed up email with typo issue, duplicate act",month:"05-2026"},
-  {date:"2026-05-01",created:"2026-04-29",lob:"RecentFollow",email:"alexaaltenhoff28@gmail.com",plan:"Expert Quarterly",reason:"Duplicate",gateway:"OpenPay",payment:"VISA",amount:80,reso:"Refunded",agent:"Ben",notes:"Refunded duplicate charge and acct",month:"05-2026"},
-  {date:"2026-05-01",created:"2026-04-20",lob:"FollowSpy",email:"mc.ibia.mcb@gmail.com",plan:"Premium Weekly",reason:"Duplicate",gateway:"OpenPay",payment:"ApplePay",amount:9,reso:"Refunded",agent:"Mariam",notes:"Refunded duplicate charge",month:"05-2026"},
-  {date:"2026-05-01",created:"2026-04-30",lob:"FollowSpy",email:"a01051003625@gmail.com",plan:"Premium Weekly",reason:"Dispute threat",gateway:"OpenPay",payment:"MC",amount:82,reso:"Refunded",agent:"Mariam",notes:"Terminated and Refunded",month:"05-2026"},
-  {date:"2026-05-01",created:"2026-04-16",lob:"FollowSpy",email:"alyssa111104@gmail.com",plan:"Starter Weekly",reason:"Duplicate",gateway:"OpenPay",payment:"ApplePay",amount:7,reso:"Refunded",agent:"Mariam",notes:"Refunded duplicate",month:"05-2026"},
-  {date:"2026-05-05",created:"2026-04-29",lob:"FollowSpy",email:"nurgokmen032@icloud.com",plan:"Starter Quarterly",reason:"Accidental reg quarterly",gateway:"OpenPay",payment:"MC",amount:27.97,reso:"Refund Difference",agent:"Geal",notes:"Cx accepted DG from Premium to Starter quarterly, refunded price diff",month:"05-2026"},
-  {date:"2026-05-04",created:"2026-05-02",lob:"FollowSpy",email:"jenny20614@gmail.com",plan:"Starter Weekly",reason:"Dispute threat",gateway:"OpenPay",payment:"MC",amount:7,reso:"Refunded",agent:"Geal",notes:"MC non US. Processed term and refund",month:"05-2026"},
-  {date:"2026-05-04",created:"2025-10-13",lob:"RecentFollow",email:"reneekhader@gmail.com",plan:"Expert Weekly",reason:"Duplicate",gateway:"OpenPay",payment:"ApplePay",amount:8,reso:"Refunded",agent:"Ben",notes:"Duplicate charge",month:"05-2026"},
-  {date:"2026-05-04",created:"2026-05-01",lob:"FollowSpy",email:"erickbonilla084@gmail.com",plan:"Starter Quarterly",reason:"Accidental reg quarterly",gateway:"OpenPay",payment:"VISA",amount:73.13,reso:"Refund Difference",agent:"Geal",notes:"Accepted DG, refunded price difference",month:"05-2026"},
-  {date:"2026-05-04",created:"2026-04-20",lob:"FollowSpy",email:"soomin061209@gmail.com",plan:"Premium Weekly",reason:"Accidental reg quarterly",gateway:"OpenPay",payment:"MC",amount:60.98,reso:"Refund Difference",agent:"Geal",notes:"Accepted DG, refunded price difference",month:"05-2026"},
-  {date:"2026-05-04",created:"2026-05-02",lob:"FollowSpy",email:"davilynx@gmail.com",plan:"Premium Quarterly",reason:"No longer needed",gateway:"OpenPay",payment:"MC",amount:80.71,reso:"Refunded",agent:"Geal",notes:"Term and refunded, advised cx to register with weekly plan",month:"05-2026"},
-  {date:"2026-05-04",created:"2026-05-03",lob:"FollowSpy",email:"yifu.song.07@gmail.com",plan:"Starter Quarterly",reason:"Accidental upgrade quarterly",gateway:"OpenPay",payment:"MC",amount:57.33,reso:"Refund Difference",agent:"Geal",notes:"Accepted DG, refunded price difference",month:"05-2026"},
-  {date:"2026-05-04",created:"2026-05-04",lob:"FollowSpy",email:"ejduelas00@gmail.com",plan:"Premium Quarterly",reason:"Accidental reg quarterly",gateway:"OpenPay",payment:"MC",amount:82.01,reso:"Refunded",agent:"Geal",notes:"MC non US, threatened dispute, term and refunded",month:"05-2026"},
-  {date:"2026-05-05",created:"2026-05-04",lob:"RecentFollow",email:"bandon0870@gmail.com",plan:"Expert Quarterly",reason:"Accidental upgrade quarterly",gateway:"OpenPay",payment:"ApplePay",amount:72.01,reso:"Refund Difference",agent:"Ben",notes:"Accepted DG, refunded price difference",month:"05-2026"},
-  {date:"2026-05-05",created:"2026-05-04",lob:"FollowSpy",email:"shomen@naver.com",plan:"Starter Quarterly",reason:"Accidental reg quarterly",gateway:"OpenPay",payment:"MC",amount:64,reso:"Refunded",agent:"Roy",notes:"Declined all save offers, termed and refunded",month:"05-2026"},
-  {date:"2026-05-05",created:"2026-05-04",lob:"FollowSpy",email:"doroshenkoi88bato@gmail.com",plan:"Starter Quarterly",reason:"Accidental upgrade quarterly",gateway:"OpenPay",payment:"MC",amount:57,reso:"Prorated Refund",agent:"Roy",notes:"Cx accepted term and refund deducting 1 week charge",month:"05-2026"},
-  {date:"2026-05-05",created:"2026-05-04",lob:"FollowSpy",email:"juaninzze@msn.com",plan:"Starter Weekly",reason:"Dispute threat",gateway:"OpenPay",payment:"ApplePay",amount:7,reso:"Refunded",agent:"Roy",notes:"Cx wants to see the unfollow, declined all save offers",month:"05-2026"},
-  {date:"2026-05-05",created:"2026-05-04",lob:"FollowSpy",email:"1vladimir.malovik1@gmail.com",plan:"Starter Quarterly",reason:"Accidental reg quarterly",gateway:"OpenPay",payment:"MC",amount:57.02,reso:"Refund Difference",agent:"Roy",notes:"Accepted DG and refund price difference",month:"05-2026"},
-  {date:"2026-05-05",created:"2026-01-30",lob:"FollowSpy",email:"casie.madar@gmail.com",plan:"Starter Quarterly",reason:"No longer needed",gateway:"OpenPay",payment:"VISA",amount:32,reso:"50% Refund",agent:"Roy",notes:"Cx accepted term and 50% refund offered",month:"05-2026"},
-  {date:"2026-05-05",created:"2026-05-05",lob:"FollowSpy",email:"evietorres07@gmail.com",plan:"Starter Quarterly",reason:"Accidental reg quarterly",gateway:"OpenPay",payment:"VISA",amount:57.01,reso:"Refund Difference",agent:"Roy",notes:"Cx DG'd to weekly plan and refunded price diff",month:"05-2026"},
-  {date:"2026-05-05",created:"2026-04-07",lob:"FollowSpy",email:"Aaronstevens7@icloud.com",plan:"Starter Quarterly",reason:"Duplicate",gateway:"OpenPay",payment:"ApplePay",amount:79.69,reso:"Refund Difference",agent:"Roy",notes:"Cx accepted term and prorated refund offered",month:"05-2026"},
-  {date:"2026-05-05",created:"2026-05-05",lob:"FollowSpy",email:"Masteralnajjarq8@gmail.com",plan:"Premium Quarterly",reason:"No longer needed",gateway:"OpenPay",payment:"MC",amount:73,reso:"Prorated Refund",agent:"Roy",notes:"Accepted full term and refund minus 1 week service",month:"05-2026"},
-  {date:"2026-05-07",created:"2026-05-06",lob:"FollowSpy",email:"ashleehasss@gmail.com",plan:"Premium Quarterly",reason:"Accepted DG to lower quart, refund diff",gateway:"OpenPay",payment:"VISA",amount:17.78,reso:"Prorated Refund",agent:"Ben",notes:"Accidentally reg quarterly, DG lower quarterly plan and refund diff",month:"05-2026"},
-  {date:"2026-05-08",created:"2026-05-05",lob:"RecentFollow",email:"vivianbui9@gmail.com",plan:"Expert Quarterly",reason:"Accidental reg quarterly",gateway:"OpenPay",payment:"VISA",amount:80,reso:"Refunded",agent:"Geal",notes:"Declined save offers, cx disputing with bank",month:"05-2026"},
-  {date:"2026-05-08",created:"2026-05-08",lob:"FollowSpy",email:"mickeymatar2@gmail.com",plan:"Premium Quarterly",reason:"Accidental reg quarterly",gateway:"OpenPay",payment:"Paypal",amount:82.01,reso:"Refunded",agent:"Geal",notes:"Cx insisted full refund, not aware of quarterly charge. PAYPAL",month:"05-2026"},
-  {date:"2026-05-11",created:"2025-08-03",lob:"RecentFollow",email:"tristan.henriquez@yahoo.com",plan:"Elite V1 Weekly",reason:"Renewal cx unaware",gateway:"Stripe",payment:"AMEX",amount:8,reso:"Refunded",agent:"Geal",notes:"Showing free on their end. Refunded most recent charge",month:"05-2026"},
-  {date:"2026-05-11",created:"2026-05-03",lob:"FollowSpy",email:"mgialouris7@gmail.com",plan:"Starter Weekly",reason:"Dispute threat",gateway:"OpenPay",payment:"VISA",amount:7,reso:"Refunded",agent:"Geal",notes:"Escalated for processing refund in OP",month:"05-2026"},
-  {date:"2026-05-11",created:"2026-05-02",lob:"FollowSpy",email:"gapsygirl10@gmail.com",plan:"Premium Quarterly",reason:"Dispute threat",gateway:"OpenPay",payment:"MC",amount:73.01,reso:"Refund Difference",agent:"Geal",notes:"Task, might be active dispute, account terminated by dispute team",month:"05-2026"},
-  {date:"2026-05-12",created:"2026-05-11",lob:"RecentFollow",email:"sofiaginesleent2@gmail.com",plan:"Expert Quarterly",reason:"Accidental upgrade quarterly",gateway:"OpenPay",payment:"ApplePay",amount:72.01,reso:"Refund Difference",agent:"Geal",notes:"Accidentally reg quarterly, DG lower quarterly plan and refund diff",month:"05-2026"},
-  {date:"2026-05-12",created:"2026-05-11",lob:"FollowSpy",email:"edgardavendanom@gmail.com",plan:"Starter Quarterly",reason:"Accepted DG to weekly, refund diff",gateway:"OpenPay",payment:"VISA",amount:63.51,reso:"Refund Difference",agent:"Roy",notes:"Accidentally reg quarterly, DG lower quarterly plan and refund diff",month:"05-2026"},
-  {date:"2026-05-12",created:"2026-04-13",lob:"FollowSpy",email:"gabbyy_96@yahoo.com",plan:"Starter Weekly",reason:"Duplicate",gateway:"OpenPay",payment:"ApplePay",amount:7,reso:"Refunded",agent:"Roy",notes:"Acct canceled in DB but active in OP, manually refunded",month:"05-2026"},
-  {date:"2026-05-12",created:"2026-04-06",lob:"FollowSpy",email:"rdfd56@icloud.com",plan:"Premium Quarterly",reason:"Accidental upgrade quarterly",gateway:"OpenPay",payment:"ApplePay",amount:73.26,reso:"Refund Difference",agent:"Jessica",notes:"DG back to weekly, rejected save offer, refund difference",month:"05-2026"},
-  {date:"2026-05-12",created:"2026-05-12",lob:"RecentFollow",email:"mariecfoerster@web.de",plan:"Starter Quarterly",reason:"Accepted DG to weekly, refund diff",gateway:"OpenPay",payment:"ApplePay",amount:57.01,reso:"Refund Difference",agent:"Geal",notes:"Cx declined credit offer but accepted DG",month:"05-2026"},
-  {date:"2026-05-13",created:"2026-05-09",lob:"FollowSpy",email:"heibibaby7@gmail.com",plan:"Premium Quarterly",reason:"Accepted DG to lower quart, refund diff",gateway:"OpenPay",payment:"MC",amount:73,reso:"Prorated Refund",agent:"Roy",notes:"Cx accepted term and prorated refund, escalated to process refund",month:"05-2026"},
-  {date:"2026-05-13",created:"2026-05-12",lob:"FollowSpy",email:"daisyluview@gmail.com",plan:"Premium Quarterly",reason:"Accepted DG to weekly, refund diff",gateway:"OpenPay",payment:"MC",amount:81.01,reso:"Refund Difference",agent:"Ben",notes:"Accepted DG to weekly save offer",month:"05-2026"},
-  {date:"2026-05-13",created:"2026-04-26",lob:"FollowSpy",email:"miljevicivan1@gmail.com",plan:"Starter Weekly",reason:"Dispute threat",gateway:"OpenPay",payment:"VISA",amount:7,reso:"Refunded",agent:"Ben",notes:"Dispute threat after renewal if acct is still charged",month:"05-2026"},
-  {date:"2026-05-14",created:"2026-05-13",lob:"FollowSpy",email:"jayeshbaid7@gmail.com",plan:"Starter Quarterly",reason:"No longer needed",gateway:"OpenPay",payment:"VISA",amount:57,reso:"Prorated Refund",agent:"Roy",notes:"Cx accepted term and prorated refund offered",month:"05-2026"},
-  {date:"2026-05-15",created:"2026-05-13",lob:"FollowSpy",email:"babyfacecayy@gmail.com",plan:"Premium Weekly",reason:"Rejected save offer",gateway:"OpenPay",payment:"VISA",amount:9,reso:"Refunded",agent:"Roy",notes:"Cx declined all save offers, still insists on refund",month:"05-2026"},
-  {date:"2026-05-17",created:"2026-05-17",lob:"FollowSpy",email:"anonymaerlig8@gmail.com",plan:"Starter Quarterly",reason:"Dispute threat",gateway:"OpenPay",payment:"ApplePay",amount:57.01,reso:"Prorated Refund",agent:"Geal",notes:"Not aware of upgrade, cx accepted term and partial refund",month:"05-2026"},
-  {date:"2026-05-17",created:"2026-05-17",lob:"FollowSpy",email:"vegasmami141820@gmail.com",plan:"Starter Quarterly",reason:"Duplicate",gateway:"OpenPay",payment:"VISA",amount:64,reso:"Prorated Refund",agent:"Geal",notes:"Duplicate subs, offered retention on quarterly, cx kept starter weekly",month:"05-2026"},
-  {date:"2026-05-18",created:"2026-12-17",lob:"RecentFollow",email:"romanfloyd01@gmail.com",plan:"Starter Quarterly",reason:"Accepted DG to weekly, refund diff",gateway:"OpenPay",payment:"Paypal",amount:60.32,reso:"Refund Difference",agent:"Roy",notes:"Duplicate subs, cx accepted to keep starter weekly plan",month:"05-2026"},
-  {date:"2026-05-18",created:"2026-05-15",lob:"FollowSpy",email:"shtundak18@gmail.com",plan:"Starter Quarterly",reason:"Accepted DG to weekly, refund diff",gateway:"OpenPay",payment:"VISA",amount:57.88,reso:"Refund Difference",agent:"Roy",notes:"Duplicate subs, cx accepted to keep starter weekly plan",month:"05-2026"},
-  {date:"2026-05-18",created:"2026-11-17",lob:"RecentFollow",email:"chanelrs@yahoo.com",plan:"Expert Quarterly",reason:"Dispute threat",gateway:"OpenPay",payment:"VISA",amount:80,reso:"Refunded",agent:"Roy",notes:"Cx declined all save offers, wants full refund",month:"05-2026"},
-  {date:"2026-05-18",created:"2026-05-17",lob:"RecentFollow",email:"jackievazquez96@yahoo.com",plan:"Expert Quarterly",reason:"Accidental reg quarterly",gateway:"OpenPay",payment:"ApplePay",amount:0,reso:"Refunded",agent:"Jessica",notes:"Accidentally reg quarterly, DG lower quarterly plan",month:"05-2026"},
-  {date:"2026-05-18",created:"2025-11-24",lob:"RecentFollow",email:"annierc493@gmail.com",plan:"Expert Weekly",reason:"Duplicate",gateway:"OpenPay",payment:"ApplePay",amount:56,reso:"Refunded",agent:"Geal",notes:"Duplicate charges, 5 active weekly subscriptions, refunded $56",month:"05-2026"},
-  {date:"2026-05-20",created:"2026-05-01",lob:"FollowSpy",email:"lgillgilgil@gmail.com",plan:"Starter Quarterly",reason:"Accepted DG to weekly, refund diff",gateway:"OpenPay",payment:"VISA",amount:64,reso:"Refunded",agent:"Roy",notes:"Agreed to DG and refund price diff, original card issue",month:"05-2026"},
-  {date:"2026-05-20",created:"2026-05-12",lob:"FollowSpy",email:"kassadin849@gmail.com",plan:"Starter Quarterly",reason:"Accidental reg quarterly",gateway:"OpenPay",payment:"ApplePay",amount:63.20,reso:"Refunded",agent:"Roy",notes:"Acct already refunded and termed, declined save offer",month:"05-2026"},
-  {date:"2026-05-20",created:"2026-05-20",lob:"FollowSpy",email:"zelyn13@gmail.com",plan:"Starter Quarterly",reason:"Accidental reg quarterly",gateway:"OpenPay",payment:"Discover",amount:57,reso:"Prorated Refund",agent:"Roy",notes:"Cx accepted term and prorated refund offered",month:"05-2026"},
-  {date:"2026-05-20",created:"2026-05-19",lob:"FollowSpy",email:"otlaxime18@gmail.comm",plan:"Premium Quarterly",reason:"Accidental reg quarterly",gateway:"OpenPay",payment:"VISA",amount:82,reso:"Refund Difference",agent:"Roy",notes:"Cx declined DG with credit offer, wants price diff refunded",month:"05-2026"},
-  {date:"2026-05-20",created:"2026-10-18",lob:"RecentFollow",email:"siennamcsherry2005@gmail.com",plan:"Expert Quarterly",reason:"Accidental reg quarterly",gateway:"OpenPay",payment:"Other",amount:80,reso:"Refund Difference",agent:"Roy",notes:"Cx declined DG with credit offer, wants price diff refunded",month:"05-2026"},
-  {date:"2026-05-20",created:"2026-05-18",lob:"FollowSpy",email:"erdenechuluunk@icloud.com",plan:"Premium Weekly",reason:"Dispute threat",gateway:"OpenPay",payment:"ApplePay",amount:9,reso:"Refunded",agent:"Ben",notes:"Dispute + legal threat, rejected all save offers",month:"05-2026"},
-  {date:"2026-05-25",created:"2026-05-11",lob:"FollowSpy",email:"fari-i@outlook.de",plan:"Premium Quarterly",reason:"Dispute threat",gateway:"OpenPay",payment:"Discover",amount:82,reso:"Refund Difference",agent:"Roy",notes:"Cx accepted DG with price diff refunded, Discover cx",month:"05-2026"},
-  {date:"2026-05-27",created:"2025-11-18",lob:"RecentFollow",email:"qbrown1115@gmail.com",plan:"Expert Quarterly",reason:"Duplicate",gateway:"OpenPay",payment:"ApplePay",amount:80,reso:"Refunded",agent:"Roy",notes:"Duplicate charge, cx requested refund",month:"05-2026"},
-  {date:"2026-05-27",created:"2026-05-23",lob:"FollowSpy",email:"amandaspears555@gmail.com",plan:"Premium Quarterly",reason:"Accepted termination and prorated refund",gateway:"OpenPay",payment:"VISA",amount:73,reso:"Prorated Refund",agent:"Roy",notes:"Cx accepted term and prorated refund offered",month:"05-2026"},
-  {date:"2026-05-28",created:"2026-05-12",lob:"FollowSpy",email:"thibault.thuillier@gmail.com",plan:"Starter Weekly",reason:"Dispute threat",gateway:"OpenPay",payment:"MC",amount:7,reso:"Refunded",agent:"Roy",notes:"Cx threatened dispute, termed and refunded latest charge",month:"05-2026"},
-  {date:"2026-05-28",created:"2026-05-21",lob:"FollowSpy",email:"mpunhan783@gmail.com",plan:"Premium Weekly",reason:"Dispute threat",gateway:"OpenPay",payment:"ApplePay",amount:9,reso:"Refunded",agent:"Roy",notes:"Cx threatened dispute, termed and refunded charge",month:"05-2026"},
-  {date:"2026-05-29",created:"2026-08-28",lob:"FollowSpy",email:"ciara.gaglio@gmail.com",plan:"Starter Quarterly",reason:"Accidental reg quarterly",gateway:"OpenPay",payment:"VISA",amount:64,reso:"Refund Difference",agent:"Roy",notes:"Cx wants to DG to weekly and refund price diff",month:"05-2026"},
-  {date:"2026-05-29",created:"2026-05-28",lob:"FollowSpy",email:"readersguide15@gmail.com",plan:"Starter Weekly",reason:"Rejected save offer",gateway:"OpenPay",payment:"ApplePay",amount:7,reso:"Refunded",agent:"Roy",notes:"Cx unable to login, declined save offers",month:"05-2026"},
-  {date:"2026-05-29",created:"2026-05-28",lob:"FollowSpy",email:"porscheaimiranda@outlook.com",plan:"Starter Quarterly",reason:"Duplicate",gateway:"OpenPay",payment:"ApplePay",amount:58.68,reso:"Refunded",agent:"Geal",notes:"Two active plans, cx accepted DG to weekly, term and refund quarterly",month:"05-2026"},
-  {date:"2026-06-01",created:"2026-05-31",lob:"RecentFollow",email:"ngtu2907@gmail.com",plan:"Expert Quarterly",reason:"Accidental reg quarterly",gateway:"OpenPay",payment:"ApplePay",amount:80,reso:"Refund Difference",agent:"Roy",notes:"Cx accepted DG to weekly and price diff refunded",month:"06-2026"},
-  {date:"2026-06-01",created:"2026-05-30",lob:"FollowSpy",email:"hetroax23@gmail.com",plan:"Starter Quarterly",reason:"Accepted termination and prorated refund",gateway:"OpenPay",payment:"ApplePay",amount:57,reso:"Prorated Refund",agent:"Roy",notes:"Cx accepted term and prorated refund offered",month:"06-2026"},
-  {date:"2026-06-02",created:"2026-05-31",lob:"FollowSpy",email:"chloe.keli.lee@gmail.com",plan:"Starter Quarterly",reason:"Accepted DG to weekly, refund diff",gateway:"OpenPay",payment:"ApplePay",amount:64,reso:"Refund Difference",agent:"Roy",notes:"Cx accepted DG and price diff refunded",month:"06-2026"},
-  {date:"2026-06-02",created:"2026-06-01",lob:"FollowSpy",email:"Cuteprmami6@yahoo.com",plan:"Starter Weekly",reason:"Duplicate",gateway:"OpenPay",payment:"ApplePay",amount:7,reso:"Refunded",agent:"Roy",notes:"Refunded duplicate charge",month:"06-2026"},
-  {date:"2026-06-02",created:"2026-05-30",lob:"FollowSpy",email:"Luisita.sandoval.87@gmail.com",plan:"Premium Quarterly",reason:"Accepted termination and prorated refund",gateway:"OpenPay",payment:"MC",amount:73,reso:"Prorated Refund",agent:"Roy",notes:"Cx accepted term and prorated refund - MC",month:"06-2026"},
-  {date:"2026-06-02",created:"2026-06-02",lob:"FollowSpy",email:"comfortmarykay@hotmail.com",plan:"Starter Quarterly",reason:"Accepted DG to weekly, refund diff",gateway:"OpenPay",payment:"VISA",amount:64,reso:"Refund Difference",agent:"Roy",notes:"Cx DG'd to weekly, wants price diff refunded",month:"06-2026"},
-  {date:"2026-06-02",created:"2025-10-11",lob:"RecentFollow",email:"selina.martinez1996@hotmail.com",plan:"Expert Quarterly",reason:"Accepted termination and prorated refund",gateway:"OpenPay",payment:"ApplePay",amount:72,reso:"Prorated Refund",agent:"Roy",notes:"Cx accepted term and prorated refund - AWX",month:"06-2026"},
-  {date:"2026-06-03",created:"2026-05-12",lob:"RecentFollow",email:"alexbcolon@gmail.com",plan:"Starter Weekly",reason:"No longer needed",gateway:"OpenPay",payment:"ApplePay",amount:24,reso:"Refunded",agent:"Roy",notes:"Wrong email during registration, term and advised to register",month:"06-2026"},
-  {date:"2026-06-03",created:"2025-11-13",lob:"RecentFollow",email:"celineherrera17@gmail.com",plan:"Elite V1 Weekly",reason:"Duplicate",gateway:"Stripe",payment:"Other",amount:8,reso:"Refunded",agent:"Roy",notes:"Duplicate account in Stripe, charged after canceling",month:"06-2026"},
-  {date:"2026-06-04",created:"2026-05-21",lob:"FollowSpy",email:"roxanne.jackson1960@icloud.com",plan:"Starter Quarterly",reason:"Dispute threat",gateway:"OpenPay",payment:"VISA",amount:73,reso:"Refund Difference",agent:"Roy",notes:"Cx downgraded to weekly and wants price diff refunded",month:"06-2026"},
-  {date:"2026-06-05",created:"2026-05-24",lob:"FollowSpy",email:"Jerson.madrid23Yoo@gmail.com",plan:"Premium Quarterly",reason:"Dispute threat",gateway:"OpenPay",payment:"MC",amount:73,reso:"Prorated Refund",agent:"Roy",notes:"Cx accepted term and prorated refund offered",month:"06-2026"},
-  {date:"2026-06-05",created:"2026-02-28",lob:"RecentFollow",email:"Dayajordan10@gmail.com",plan:"Expert Quarterly",reason:"Accepted DG to weekly, refund diff",gateway:"OpenPay",payment:"VISA",amount:80,reso:"Refund Difference",agent:"Geal",notes:"Cx declined credit, later accepted DG and refund. Escalated",month:"06-2026"},
-  {date:"2026-06-08",created:"2026-06-07",lob:"FollowSpy",email:"a4756800@gmail.com",plan:"Premium Quarterly",reason:"Accepted DG to weekly, refund diff",gateway:"OpenPay",payment:"ApplePay",amount:82,reso:"Refund Difference",agent:"Roy",notes:"Cx declined DG with credit offer, wants price diff refunded",month:"06-2026"},
-  {date:"2026-06-08",created:"2026-06-05",lob:"RecentFollow",email:"Meaghanestes@hotmail.com",plan:"Expert Weekly",reason:"Dispute threat",gateway:"OpenPay",payment:"ApplePay",amount:8,reso:"Refunded",agent:"Roy",notes:"Cx declined save offers, want full refund",month:"06-2026"},
-  {date:"2026-06-08",created:"2026-04-28",lob:"FollowSpy",email:"schmiederer@mail.ru",plan:"Starter Quarterly",reason:"Accidental upgrade quarterly",gateway:"OpenPay",payment:"ApplePay",amount:64,reso:"Refund Difference",agent:"Roy",notes:"Cx declined save offers, want full refund",month:"06-2026"},
-  {date:"2026-06-08",created:"2026-04-28",lob:"FollowSpy",email:"kimbelgabrielle@gmail.com",plan:"Premium Quarterly",reason:"Accepted DG to weekly, refund diff",gateway:"OpenPay",payment:"ApplePay",amount:80,reso:"Refund Difference",agent:"Roy",notes:"Cx declined save offers, want full refund",month:"06-2026"},
-  {date:"2026-06-08",created:"2025-10-31",lob:"RecentFollow",email:"grayaamiyah@icloud.com",plan:"Expert Quarterly",reason:"Accidental upgrade quarterly",gateway:"OpenPay",payment:"ApplePay",amount:72,reso:"Prorated Refund",agent:"Geal",notes:"Accidental upgrade, declined all save offers. Prorated refund",month:"06-2026"},
-  {date:"2026-06-09",created:"2026-06-06",lob:"RecentFollow",email:"shanyacruz757@gmail.com",plan:"Expert Quarterly",reason:"Accepted DG to weekly, refund diff",gateway:"OpenPay",payment:"Other",amount:72,reso:"Prorated Refund",agent:"Roy",notes:"Cx accepted term and prorated refund offered",month:"06-2026"},
-  {date:"2026-06-10",created:"2026-05-29",lob:"RecentFollow",email:"echin9991@gmail.com",plan:"Expert Quarterly",reason:"Accepted DG to weekly, refund diff",gateway:"OpenPay",payment:"VISA",amount:80,reso:"Refund Difference",agent:"Roy",notes:"Cx accepted DG to weekly and refund price diff",month:"06-2026"},
-  {date:"2026-06-10",created:"2026-05-22",lob:"FollowSpy",email:"diana.cuadros0912@gmail.com",plan:"Standard Annual",reason:"Accepted termination and prorated refund",gateway:"OpenPay",payment:"VISA",amount:59,reso:"50% Refund",agent:"Roy",notes:"Cx accepted term and 50% refund offered",month:"06-2026"},
-  {date:"2026-06-11",created:"2026-02-25",lob:"FollowSpy",email:"alinaalexandra.eremia@gmail.com",plan:"Premium Lifetime",reason:"Accepted termination and prorated refund",gateway:"OpenPay",payment:"GooglePay",amount:81.87,reso:"Refund Difference",agent:"Roy",notes:"Cx accepted term and deduct 1 week charge, mentioned dispute threat",month:"06-2026"},
-  {date:"2026-06-12",created:"2026-06-12",lob:"FollowSpy",email:"morganjohnson3657@yahoo.com",plan:"Starter Weekly",reason:"Dispute threat",gateway:"OpenPay",payment:"ApplePay",amount:7,reso:"Refunded",agent:"Roy",notes:"Declined save offers, threaten to call bank",month:"06-2026"},
-  {date:"2026-06-12",created:"2026-06-11",lob:"FollowSpy",email:"aidan2018mitchell@gmail.com",plan:"Starter Quarterly",reason:"Accepted Prorated Refund Quarterly Save",gateway:"OpenPay",payment:"VISA",amount:10,reso:"Prorated Refund",agent:"Roy",notes:"Accidentally subscribed to quarterly, wants $10 credit, refunded",month:"06-2026"},
-  {date:"2026-06-12",created:"2026-01-29",lob:"FollowSpy",email:"segolene.bethune@gmail.com",plan:"Premium Quarterly",reason:"Accepted DG to weekly, refund diff",gateway:"OpenPay",payment:"ApplePay",amount:78.46,reso:"Refund Difference",agent:"Roy",notes:"Cx accepted DG to weekly and price diff, threatened dispute",month:"06-2026"}
+const DATA = [
+  {date:"2026-05-01",rawDate:"5/1/2026",created:"9/6/2025",lob:"RecentFollow",email:"lindseycatherineoldfield@gmail.com",plan:"Elite V1 Weekly",status:"Cancelled",reason:"No longer needed",payment:"Other",notes:"n/a",reso:"Canceled",rep:"Jessica",month:"05-2026",amount:29.99},
+  {date:"2026-05-01",rawDate:"5/1/2026",created:"7/1/2025",lob:"RecentFollow",email:"carodramirez@gmail.com",plan:"Elite V1 Weekly",status:"Cancelled",reason:"No longer needed",payment:"VISA",notes:"cancel; declined save offer",reso:"Canceled",rep:"Jessica",month:"05-2026",amount:29.99},
+  {date:"2026-05-01",rawDate:"5/1/2026",created:"8/11/2026",lob:"RecentFollow",email:"livon1584@gmail.com",plan:"Elite V1 Weekly",status:"Past Due",reason:"No longer needed",payment:"Other",notes:"past due, cx is asking for refund, pushback, canceled in Stripe",reso:"Canceled",rep:"Geal",month:"05-2026",amount:29.99},
+  {date:"2026-05-01",rawDate:"5/1/2026",created:"5/1/2026",lob:"RecentFollow",email:"dilara_oezil@hotmail.com",plan:"Expert Weekly",status:"Cancelled",reason:"No longer needed",payment:"Paypal",notes:"term in db, no longer need, cx requested for deletion",reso:"Terminated in DB",rep:"Geal",month:"05-2026",amount:19.99},
+  {date:"2026-05-01",rawDate:"5/1/2026",created:"4/1/2026",lob:"RecentFollow",email:"Maceybarrett@yahoo.co.uk",plan:"Expert Weekly",status:"Cancelled",reason:"Declined Save offer",payment:"ApplePay",notes:"CANCELATION; declined save offer -canceled in db - Geal",reso:"Canceled",rep:"Jessica",month:"05-2026",amount:19.99},
+  {date:"2026-05-01",rawDate:"5/1/2026",created:"8/26/2026",lob:"RecentFollow",email:"shadiya.ogul@gmail.com",plan:"Elite V1 Weekly",status:"Cancelled",reason:"No longer needed",payment:"Other",notes:"Cancellation",reso:"Canceled",rep:"Jessica",month:"05-2026",amount:29.99},
+  {date:"2026-05-01",rawDate:"5/1/2026",created:"8/26/2026",lob:"RecentFollow",email:"maisiebell2017@icloud.com",plan:"Elite V1 Weekly",status:"Cancelled",reason:"No longer needed",payment:"MC",notes:"Cancellation",reso:"Canceled",rep:"Jessica",month:"05-2026",amount:29.99},
+  {date:"2026-05-01",rawDate:"5/1/2026",created:"2/24/2026",lob:"RecentFollow",email:"slamnsnacks@gmail.com",plan:"Expert Quarterly",status:"Refunded",reason:"Accidental upgrade quarterly",payment:"Paypal",notes:"did not approved for the $72 charge",reso:"Refund Difference",rep:"Jessica",month:"05-2026",amount:59.99},
+  {date:"2026-05-01",rawDate:"5/1/2026",created:"9/10/2025",lob:"RecentFollow",email:"vivxsantia11@gmail.com",plan:"Elite V1 Weekly",status:"Past Due",reason:"Renewal cx unaware",payment:"Other",notes:"charged 80USD",reso:"N/A",rep:"Jessica",month:"05-2026",amount:29.99},
+  {date:"2026-05-01",rawDate:"5/1/2026",created:"9/7/2025",lob:"RecentFollow",email:"tom.collier5@gmail.com",plan:"Elite V1 Weekly",status:"Cancelled",reason:"CX DB Cancellation Issue",payment:"MC",notes:"cancel and has issues witht the tool -still having error, canceled in stripe - Geal status still show paying in db",reso:"Canceled",rep:"Jessica",month:"05-2026",amount:29.99},
+  {date:"2026-05-01",rawDate:"5/1/2026",created:"3/7/2026",lob:"RecentFollow",email:"Alondraaguilar9600@gmail.com",plan:"Expert Weekly",status:"Cancelled",reason:"CX DB Cancellation Issue",payment:"VISA",notes:"cancelation via ticket",reso:"N/A",rep:"Jessica",month:"05-2026",amount:19.99},
+  {date:"2026-05-01",rawDate:"5/1/2026",created:"n/a",lob:"RecentFollow",email:"mschremmer5@gmail.com",plan:"Other - No Acct",status:"N/A",reason:"Cancel Req",payment:"N/A",notes:"cancel (no account found i n stripe",reso:"N/A",rep:"Jessica",month:"05-2026",amount:0},
+  {date:"2026-05-01",rawDate:"5/1/2026",created:"4/30/2026",lob:"RecentFollow",email:"gigigigli@icloud.com",plan:"Expert Weekly",status:"Active",reason:"Duplicate",payment:"VISA",notes:"Duplicate charge in Stripe and OP",reso:"Refunded",rep:"Jessica",month:"05-2026",amount:19.99},
+  {date:"2026-05-01",rawDate:"5/1/2026",created:"5/1/2026",lob:"RecentFollow",email:"jaiden1g9002@gmail.com",plan:"Expert Weekly",status:"Refunded",reason:"Duplicate",payment:"VISA",notes:"did not make the 80USD transaction; refund -term and refunded, duplicate subscription  - Geal",reso:"Refunded",rep:"Jessica",month:"05-2026",amount:19.99},
+  {date:"2026-05-01",rawDate:"5/1/2026",created:"5/1/2026",lob:"RecentFollow",email:"caidence.crane2@yahoo.com",plan:"Expert Quarterly",status:"Active",reason:"Accidental reg quarterly",payment:"VISA",notes:"thought that quarterly plan is only 6.15USD / cx accepted the offer to term and we will charge 1 week of service and process refund on the remaining amount - Geal",reso:"Refunded",rep:"Jessica",month:"05-2026",amount:59.99},
+  {date:"2026-05-01",rawDate:"5/1/2026",created:"10/6/2025",lob:"RecentFollow",email:"bhatiamahima981@gmail.com",plan:"Elite V1 Weekly",status:"Cancelled",reason:"CX DB Cancellation Issue",payment:"AMEX",notes:"failed to update stripe sub error, -canceled in Stripe - Geal  status still show paying in db",reso:"Canceled",rep:"Jessica",month:"05-2026",amount:29.99},
+  {date:"2026-05-01",rawDate:"5/1/2026",created:"4/22/2025",lob:"RecentFollow",email:"lozner59@gmail.com",plan:"Elite V1 Weekly",status:"Cancelled",reason:"CX DB Cancellation Issue",payment:"Other",notes:"failed to update stripe sub error, -canceled in Stripe,  status still show paying in db",reso:"Canceled",rep:"Geal",month:"05-2026",amount:29.99},
+  {date:"2026-05-02",rawDate:"5/2/2026",created:"10/13/2025",lob:"RecentFollow",email:"reneekhader@gmail.com",plan:"Expert Weekly",status:"Terminated",reason:"Charge Inquiry",payment:"VISA",notes:"charged when no sub, already terim by dispute team",reso:"N/A",rep:"Jessica",month:"05-2026",amount:19.99},
+  {date:"2026-05-02",rawDate:"5/2/2026",created:"n/a",lob:"RecentFollow",email:"fanyuwei99@gmail.com",plan:"Other - No Acct",status:"N/A",reason:"Cancel Req",payment:"N/A",notes:"cancelation via ticket",reso:"N/A",rep:"Jessica",month:"05-2026",amount:0},
+  {date:"2026-05-02",rawDate:"5/2/2026",created:"n/a",lob:"RecentFollow",email:"katcastillo95@gmail.com",plan:"Other - No Acct",status:"N/A",reason:"Cancel Req",payment:"N/A",notes:"cancelation via ticket",reso:"N/A",rep:"Jessica",month:"05-2026",amount:0},
+  {date:"2026-05-03",rawDate:"5/3/2026",created:"11/13/2025",lob:"RecentFollow",email:"moreirajassiel@gmail.com",plan:"Elite V1 Weekly",status:"Cancelled",reason:"CX DB Cancellation Issue",payment:"Other",notes:"Cancellation request, canceled in stripe, status still show paying in db",reso:"Canceled",rep:"Geal",month:"05-2026",amount:29.99},
+  {date:"2026-05-03",rawDate:"5/3/2026",created:"8/26/2025",lob:"RecentFollow",email:"shadiya.x@hotmail.com",plan:"Elite V1 Weekly",status:"Cancelled",reason:"CX DB Cancellation Issue",payment:"Paypal",notes:"Cancellation request, canceled in stripe, status still show paying in db",reso:"Canceled",rep:"Geal",month:"05-2026",amount:29.99},
+  {date:"2026-05-03",rawDate:"5/3/2026",created:"5/1/2026",lob:"RecentFollow",email:"ariannapc@outlook.fr",plan:"Expert Weekly",status:"Cancelled",reason:"Cancel Req",payment:"ApplePay",notes:"cancellation (no acct found in stripe), acct in OP already sub ending",reso:"N/A",rep:"Jessica",month:"05-2026",amount:19.99},
+  {date:"2026-05-03",rawDate:"5/3/2026",created:"10/21/2025",lob:"RecentFollow",email:"Neene0704@gmail.com",plan:"Expert Weekly",status:"Active",reason:"Cancel Req",payment:"MC",notes:"cancelation via ticket, sent cancel instructions",reso:"N/A",rep:"Jessica",month:"05-2026",amount:19.99},
+  {date:"2026-05-04",rawDate:"5/4/2026",created:"10/9/2025",lob:"RecentFollow",email:"milayannc@gmail.com",plan:"Expert Weekly",status:"Active",reason:"Cancel Req",payment:"VISA",notes:"charged twice despite cancelation",reso:"Canceled",rep:"Jessica",month:"05-2026",amount:19.99},
+  {date:"2026-05-04",rawDate:"5/4/2026",created:"10/9/2025",lob:"RecentFollow",email:"samnshipp1@gmail.com",plan:"Elite V1 Weekly",status:"Active",reason:"Cancel Req",payment:"VISA",notes:"cancel; no option to cancel",reso:"Canceled",rep:"Jessica",month:"05-2026",amount:29.99},
+  {date:"2026-05-04",rawDate:"5/4/2026",created:"10/1/2025",lob:"RecentFollow",email:"blu.indiacephas@gmail.com",plan:"Expert Weekly",status:"Cancelled",reason:"No longer needed",payment:"ApplePay",notes:"cancel and refund; no longer using services",reso:"Canceled",rep:"Jessica",month:"05-2026",amount:19.99},
+  {date:"2026-05-04",rawDate:"5/4/2026",created:"7/25/2025",lob:"RecentFollow",email:"alexalbouz@yahoo.com",plan:"Elite V1 Weekly",status:"Cancelled",reason:"Declined Save offer",payment:"Other",notes:"declined save offer",reso:"Canceled",rep:"Geal",month:"05-2026",amount:29.99},
+  {date:"2026-05-04",rawDate:"5/4/2026",created:"4/17/2026",lob:"RecentFollow",email:"lilycoryn9274@gmail.com",plan:"Expert Weekly",status:"Cancelled",reason:"CX DB Cancellation Issue",payment:"ApplePay",notes:"beyond 7 days. canceled in db",reso:"Canceled",rep:"Geal",month:"05-2026",amount:19.99},
+  {date:"2026-05-05",rawDate:"5/5/2026",created:"4/29/2026",lob:"RecentFollow",email:"alexaaltenhoff28@gmail.com",plan:"Expert Quarterly",status:"Refunded",reason:"Duplicate",payment:"VISA",notes:"Refunded duplicate charge and acct",reso:"Escalated",rep:"Geal",month:"05-2026",amount:59.99},
+  {date:"2026-05-05",rawDate:"5/5/2026",created:"3/8/2026",lob:"RecentFollow",email:"bitikofergreta@gmail.com",plan:"Expert Weekly",status:"Active",reason:"No longer needed",payment:"VISA",notes:"cancelation via ticket",reso:"N/A",rep:"Jessica",month:"05-2026",amount:19.99},
+  {date:"2026-05-05",rawDate:"5/5/2026",created:"5/4/2026",lob:"RecentFollow",email:"bandon0870@gmail.com",plan:"Starter Quarterly",status:"Active",reason:"Dispute threat",payment:"VISA",notes:"retain weekly plan and full refund on the full quarterly charge",reso:"Escalated",rep:"Jessica",month:"05-2026",amount:19.99},
+  {date:"2026-05-05",rawDate:"5/5/2026",created:"4/21/2026",lob:"RecentFollow",email:"makaylannl@gmail.com",plan:"Starter Weekly",status:"Active",reason:"No longer needed",payment:"Paypal",notes:"cancel and refund; thought it was one time",reso:"N/A",rep:"Jessica",month:"05-2026",amount:9.99},
+  {date:"2026-05-05",rawDate:"5/5/2026",created:"8/26/2025",lob:"RecentFollow",email:"biancadecesare@icloud.com",plan:"Elite V1 Weekly",status:"Active",reason:"CX DB Cancellation Issue",payment:"Other",notes:"unable to cancel",reso:"N/A",rep:"Jessica",month:"05-2026",amount:29.99},
+  {date:"2026-05-05",rawDate:"5/5/2026",created:"10/25/2025",lob:"RecentFollow",email:"mckynna03@icloud.com",plan:"Expert Weekly",status:"Active",reason:"Declined Save offer",payment:"VISA",notes:"opt out all payments",reso:"N/A",rep:"Jessica",month:"05-2026",amount:19.99},
+  {date:"2026-05-01",rawDate:"5/1/2026",created:"5/1/2026",lob:"FollowSpy",email:"pleshtyalex123@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"Cancel Req",payment:"ApplePay",notes:"Cancellation and declined save offers",reso:"Canceled",rep:"Mariam",month:"05-2026",amount:9.99},
+  {date:"2026-05-01",rawDate:"5/1/2026",created:"4/20/2026",lob:"FollowSpy",email:"mc.ibia.mcb@gmail.com",plan:"Premium Weekly",status:"Refunded",reason:"Duplicate",payment:"ApplePay",notes:"Term & refunded duplicate subs in OP",reso:"Refunded",rep:"Mariam",month:"05-2026",amount:14.99},
+  {date:"2026-05-01",rawDate:"5/1/2026",created:"5/1/2026",lob:"FollowSpy",email:"sreekuttytp3@gmail.com",plan:"Premium Weekly",status:"Cancelled",reason:"Cancel Req",payment:"VISA",notes:"Cancelled in admin DB",reso:"Canceled",rep:"Mariam",month:"05-2026",amount:14.99},
+  {date:"2026-05-01",rawDate:"5/1/2026",created:"04/30/2026",lob:"FollowSpy",email:"a01051003625@gmail.com",plan:"Premium Quarterly",status:"Refunded",reason:"Dispute threat",payment:"MC",notes:"Dispute & legal threats",reso:"Refunded",rep:"Mariam",month:"05-2026",amount:39.99},
+  {date:"2026-05-01",rawDate:"5/1/2026",created:"4/16/2026",lob:"FollowSpy",email:"alyssa111104@gmail.com",plan:"Starter Weekly",status:"Refunded",reason:"Duplicate",payment:"ApplePay",notes:"Duplicate charge",reso:"Refunded",rep:"Mariam",month:"05-2026",amount:9.99},
+  {date:"2026-05-01",rawDate:"5/1/2026",created:"5/1/2026",lob:"FollowSpy",email:"noemiaracri650@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"No longer needed",payment:"ApplePay",notes:"Cancelled in admin DB",reso:"Canceled",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-01",rawDate:"5/1/2026",created:"5/1/2026",lob:"FollowSpy",email:"thayakaranst96@icloud.com",plan:"Premium Weekly",status:"Cancelled",reason:"Service not as expected/Dissatisfied",payment:"ApplePay",notes:"Cancelled in admin DB",reso:"Canceled",rep:"Geal",month:"05-2026",amount:14.99},
+  {date:"2026-05-01",rawDate:"5/1/2026",created:"5/1/2026",lob:"FollowSpy",email:"Dominiquecatalan9@gmail.com",plan:"Premium Weekly",status:"Cancelled",reason:"Service not as expected/Dissatisfied",payment:"VISA",notes:"Cancelled in admin DB",reso:"Canceled",rep:"Geal",month:"05-2026",amount:14.99},
+  {date:"2026-05-01",rawDate:"5/1/2026",created:"5/1/2026",lob:"FollowSpy",email:"lucyseegovia@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"Service not as expected/Dissatisfied",payment:"ApplePay",notes:"Cancelled in admin DB",reso:"Canceled",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-01",rawDate:"5/1/2026",created:"5/1/2026",lob:"FollowSpy",email:"Bethencourtmariapaula1@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"Service not as expected/Dissatisfied",payment:"VISA",notes:"Cancelled in admin DB",reso:"Canceled",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-02",rawDate:"5/2/2026",created:"5/2/2026",lob:"FollowSpy",email:"kenziekhoury2023@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"Declined Save offer",payment:"ApplePay",notes:"Cancelled in admin DB",reso:"Canceled",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-02",rawDate:"5/2/2026",created:"5/2/2026",lob:"FollowSpy",email:"hello@melindarichelle.com",plan:"Starter Weekly",status:"Cancelled",reason:"Declined Save offer",payment:"AMEX",notes:"Cancelled in admin DB",reso:"Canceled",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-02",rawDate:"5/2/2026",created:"5/2/2026",lob:"FollowSpy",email:"cristianobrito@web.de",plan:"Premium Weekly",status:"Cancelled",reason:"Declined Save offer",payment:"ApplePay",notes:"Cancelled in admin DB",reso:"Canceled",rep:"Geal",month:"05-2026",amount:14.99},
+  {date:"2026-05-02",rawDate:"5/2/2026",created:"5/2/2026",lob:"FollowSpy",email:"Exm3l.y@gmail.com",plan:"Premium Weekly",status:"Cancelled",reason:"Declined Save offer",payment:"ApplePay",notes:"Cancellation and declined save offers",reso:"Canceled",rep:"Geal",month:"05-2026",amount:14.99},
+  {date:"2026-05-02",rawDate:"5/2/2026",created:"5/2/2026",lob:"FollowSpy",email:"pytnmusic@gmail.com",plan:"Premium Weekly",status:"Cancelled",reason:"No longer needed",payment:"ApplePay",notes:"no longer need, declined save offer.",reso:"Canceled",rep:"Geal",month:"05-2026",amount:14.99},
+  {date:"2026-05-02",rawDate:"5/2/2026",created:"5/2/2026",lob:"FollowSpy",email:"jae.messer06@gmail.com",plan:"Premium Weekly",status:"Cancelled",reason:"Declined Save offer",payment:"MC",notes:"no longer need, declined save offer.",reso:"Canceled",rep:"Geal",month:"05-2026",amount:14.99},
+  {date:"2026-05-02",rawDate:"5/2/2026",created:"5/2/2026",lob:"FollowSpy",email:"vivelas2000@gmail.com",plan:"Premium Weekly",status:"Cancelled",reason:"Declined Save offer",payment:"ApplePay",notes:"no longer need, declined save offer.",reso:"Canceled",rep:"Geal",month:"05-2026",amount:14.99},
+  {date:"2026-05-02",rawDate:"5/2/2026",created:"5/2/2026",lob:"FollowSpy",email:"Haileykainrath1@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"Declined Save offer",payment:"ApplePay",notes:"no longer need, declined save offer.",reso:"Canceled",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-03",rawDate:"5/3/2026",created:"5/3/2026",lob:"FollowSpy",email:"ejduelas00@gmail.com",plan:"Premium Quarterly",status:"Cancelled",reason:"Declined Save offer",payment:"MC",notes:"no longer need, declined save offer.",reso:"Canceled",rep:"Geal",month:"05-2026",amount:39.99},
+  {date:"2026-05-03",rawDate:"5/3/2026",created:"5/3/2026",lob:"FollowSpy",email:"wasaifalshareef@gmail.com",plan:"Premium Weekly",status:"Cancelled",reason:"Declined Save offer",payment:"ApplePay",notes:"no longer need, declined save offer.",reso:"Canceled",rep:"Geal",month:"05-2026",amount:14.99},
+  {date:"2026-05-03",rawDate:"5/3/2026",created:"5/3/2026",lob:"FollowSpy",email:"Alexiguez1221@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"No longer needed",payment:"VISA",notes:"no longer need, declined save offer.",reso:"Canceled",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-03",rawDate:"5/3/2026",created:"5/3/2026",lob:"FollowSpy",email:"jrsanz2152@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"No longer needed",payment:"ApplePay",notes:"no longer need, declined save offer.",reso:"Canceled",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-03",rawDate:"5/3/2026",created:"5/3/2026",lob:"FollowSpy",email:"melanielizama@yahoo.com",plan:"Starter Weekly",status:"Cancelled",reason:"Service not as expected/Dissatisfied",payment:"MC",notes:"terminated in admin DB Refunded in OP",reso:"Refunded",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-03",rawDate:"5/3/2026",created:"2/15/2026",lob:"FollowSpy",email:"Mattia.salvati87@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"Service not as expected/Dissatisfied",payment:"VISA",notes:"unable to view private accounts, declined save offer",reso:"Canceled",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-04",rawDate:"05/04/2026",created:"04/16/2026",lob:"FollowSpy",email:"ronanmendez7@gmail.com",plan:"Starter Weekly",status:"Active",reason:"CX DB Cancellation Issue",payment:"VISA",notes:"Detractor, contacted outbound sent save offer",reso:"N/A",rep:"Roy",month:"05-2026",amount:9.99},
+  {date:"2026-05-04",rawDate:"05/04/2026",created:"4/29/2026",lob:"FollowSpy",email:"nurgokmen032@icloud.com",plan:"Starter Quarterly",status:"Active",reason:"Accidental reg quarterly",payment:"MC",notes:"Accepted prorated save offer, credit refund",reso:"Prorated Refund",rep:"Geal",month:"05-2026",amount:19.99},
+  {date:"2026-05-04",rawDate:"05/04/2026",created:"05/02/2026",lob:"FollowSpy",email:"davilynx@gmail.com",plan:"Premium Weekly",status:"Refunded",reason:"Accidental reg quarterly",payment:"MC",notes:"term this account as cx has been refunded in full. advised to reregister with weekly plan",reso:"Terminated and Refunded",rep:"Geal",month:"05-2026",amount:14.99},
+  {date:"2026-05-04",rawDate:"05/04/2026",created:"05/02/2026",lob:"FollowSpy",email:"jenny20614@gmail.com",plan:"Starter Weekly",status:"Refunded",reason:"No longer needed",payment:"MC",notes:"Term and refunded in Op, no account in db",reso:"Terminated and Refunded",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-04",rawDate:"05/04/2026",created:"4/20/2026",lob:"FollowSpy",email:"soomin061209@gmail.com",plan:"Premium Weekly",status:"Refunded",reason:"Accepted DG weekly save",payment:"MC",notes:"accepted the offer to dg, refunded the price difference",reso:"Refund Difference",rep:"Geal",month:"05-2026",amount:14.99},
+  {date:"2026-05-04",rawDate:"05/04/2026",created:"05/01/2026",lob:"FollowSpy",email:"erickbonilla084@gmail.com",plan:"Starter Weekly",status:"Refunded",reason:"Accepted DG weekly save",payment:"VISA",notes:"accepted the offer to dg, refunded the price difference",reso:"Refund Difference",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-04",rawDate:"05/04/2026",created:"05/03/2026",lob:"FollowSpy",email:"yifu.song.07@gmail.com",plan:"Starter Weekly",status:"Refunded",reason:"Accepted DG weekly save",payment:"MC",notes:"accepted the offer to dg, refunded the price difference",reso:"Refund Difference",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-04",rawDate:"05/04/2026",created:"05/04/2026",lob:"FollowSpy",email:"Jayraise727@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"Service not as expected/Dissatisfied",payment:"ApplePay",notes:"Cancelled in admin DB",reso:"Canceled",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-04",rawDate:"05/04/2026",created:"05/04/2026",lob:"FollowSpy",email:"paulschachner@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"Service not as expected/Dissatisfied",payment:"VISA",notes:"Cancelled in admin DB",reso:"Canceled",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-04",rawDate:"05/04/2026",created:"05/04/2026",lob:"FollowSpy",email:"akristinat255@gmail.com",plan:"Premium Weekly",status:"Cancelled",reason:"Service not as expected/Dissatisfied",payment:"ApplePay",notes:"Cancelled in admin DB",reso:"Canceled",rep:"Geal",month:"05-2026",amount:14.99},
+  {date:"2026-05-04",rawDate:"05/04/2026",created:"04/06/2026",lob:"FollowSpy",email:"drearomero01@gmail.com",plan:"Premium Weekly",status:"Cancelled",reason:"CX DB Cancellation Issue",payment:"VISA",notes:"Cancelled in admin DB",reso:"Canceled",rep:"Geal",month:"05-2026",amount:14.99},
+  {date:"2026-05-04",rawDate:"05/04/2026",created:"05/04/2026",lob:"FollowSpy",email:"ejduelas00@gmail.com",plan:"Premium Quarterly",status:"Refunded",reason:"Dispute threat",payment:"MC",notes:"term and refunded in db",reso:"Terminated and Refunded",rep:"Geal",month:"05-2026",amount:39.99},
+  {date:"2026-05-04",rawDate:"05/04/2026",created:"05/04/2026",lob:"FollowSpy",email:"Cdubxgodly@gmail.com",plan:"Premium Weekly",status:"Cancelled",reason:"No longer needed",payment:"ApplePay",notes:"Cancelled in admin DB",reso:"Canceled",rep:"Geal",month:"05-2026",amount:14.99},
+  {date:"2026-05-05",rawDate:"05/05/2026",created:"05/04/2026",lob:"FollowSpy",email:"juaninzze@msn.com",plan:"Starter Weekly",status:"Cancelled",reason:"Service not as expected/Dissatisfied",payment:"ApplePay",notes:"Cancelled in admin DB",reso:"Canceled",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-05",rawDate:"05/05/2026",created:"05/05/2026",lob:"FollowSpy",email:"aloisbollaert6@gmail.com",plan:"Premium Weekly",status:"Cancelled",reason:"CX DB Cancellation Issue",payment:"VISA",notes:"Cancelled in admin DB",reso:"Canceled",rep:"Geal",month:"05-2026",amount:14.99},
+  {date:"2026-05-05",rawDate:"05/05/2026",created:"05/04/2026",lob:"FollowSpy",email:"doroshenkoi88bato@gmail.com",plan:"Starter Quarterly",status:"Active",reason:"Accidental reg quarterly",payment:"MC",notes:"Accidental purchase of wrong package and refund request",reso:"Terminated in DB",rep:"Roy",month:"05-2026",amount:19.99},
+  {date:"2026-05-05",rawDate:"05/05/2026",created:"05//02/2026",lob:"FollowSpy",email:"zarathustrakonyv2@proton.me",plan:"Premium Weekly",status:"Cancelled",reason:"Declined Save offer",payment:"MC",notes:"cx requested to delete the account immed, declined save offers",reso:"Terminated in DB",rep:"Roy",month:"05-2026",amount:14.99},
+  {date:"2026-05-05",rawDate:"05/05/2026",created:"01/30/2026",lob:"FollowSpy",email:"casie.madar@gmail.com",plan:"Starter Quarterly",status:"Cancelled",reason:"Renewal cx unaware",payment:"VISA",notes:"Terminated in DB, escalated to reufnd 50% of the recent charge",reso:"Terminated in DB",rep:"Roy",month:"05-2026",amount:19.99},
+  {date:"2026-05-05",rawDate:"05/05/2026",created:"04/07/20626",lob:"FollowSpy",email:"aaronstevens7@icloud.com",plan:"Starter Quarterly",status:"Cancelled",reason:"Accidental upgrade quarterly",payment:"ApplePay",notes:"terminated in DB, escalated to process partial refund",reso:"Terminated in DB",rep:"Roy",month:"05-2026",amount:19.99},
+  {date:"2026-05-05",rawDate:"05/05/2026",created:"05/04/2026",lob:"FollowSpy",email:"doroshenkoi88bato@gmail.com",plan:"Starter Quarterly",status:"Refunded",reason:"No longer needed",payment:"MC",notes:"terminated in DB, escalated to process partial refund",reso:"Prorated Refund",rep:"Roy",month:"05-2026",amount:19.99},
+  {date:"2026-05-05",rawDate:"05/05/2026",created:"01/30/2026",lob:"FollowSpy",email:"casie.madar@gmail.com",plan:"Starter Quarterly",status:"Refunded",reason:"No longer needed",payment:"VISA",notes:"terminated in DB, escalated to process partial refund",reso:"50% Refund",rep:"Roy",month:"05-2026",amount:19.99},
+  {date:"2026-05-05",rawDate:"05/05/2026",created:"04/07/2026",lob:"FollowSpy",email:"Aaronstevens7@icloud.com",plan:"Starter Quarterly",status:"Refunded",reason:"No longer needed",payment:"VISA",notes:"cx requested refund, unauthorized charge declined save offers",reso:"Prorated Refund",rep:"Roy",month:"05-2026",amount:19.99},
+  {date:"2026-05-05",rawDate:"05/05/2026",created:"05/05/2026",lob:"FollowSpy",email:"Masteralnajjarq8@gmail.com",plan:"Premium Quarterly",status:"Refunded",reason:"Service not as expected/Dissatisfied",payment:"VISA",notes:"*  cx req to cance, unable to view private accts",reso:"Prorated Refund",rep:"Roy",month:"05-2026",amount:39.99},
+  {date:"2026-05-05",rawDate:"05/05/2026",created:"05/03/2026",lob:"FollowSpy",email:"kevinaubinkeke@gmail.com",plan:"Starter Quarterly",status:"Cancelled",reason:"Accidental reg quarterly",payment:"MC",notes:"*  cx was charged quarterly, wants weekly, accepted term and prorated refund offered",reso:"Prorated Refund",rep:"Roy",month:"05-2026",amount:19.99},
+  {date:"2026-05-05",rawDate:"05/05/2026",created:"4/29/2026",lob:"FollowSpy",email:"nurgokmen032@icloud.com",plan:"Starter Quarterly",status:"Refunded",reason:"Accepted Prorate refund quarterly save",payment:"MC",notes:"cx accepted the offer to keep the quarterly plan and we have refunded the price diff on the dg and credit of $10 with, total of $27.97 refund",reso:"Prorated Refund",rep:"Geal",month:"05-2026",amount:19.99},
+  {date:"2026-05-05",rawDate:"5/5/2026",created:"4/1/2026",lob:"RecentFollow",email:"youthanize.em@gmail.com",plan:"Expert Weekly",status:"Cancelled",reason:"Renewal cx unaware",payment:"Paypal",notes:"cx note aware of the renewal, asking for refund but we pushback",reso:"Canceled",rep:"Geal",month:"05-2026",amount:19.99},
+  {date:"2026-05-05",rawDate:"5/5/2026",created:"8/15/2025",lob:"FollowSpy",email:"shakariabethea@yahoo.com",plan:"Elite V1 Weekly",status:"Cancelled",reason:"No longer needed",payment:"VISA",notes:"unable to log in, shows canceld. declined save offer canceled in db",reso:"Canceled in Stripe",rep:"Geal",month:"05-2026",amount:29.99},
+  {date:"2026-05-05",rawDate:"5/5/2026",created:"5/5/2026",lob:"FollowSpy",email:"martinjvogelbaum@gmail.com",plan:"Premium Weekly",status:"Cancelled",reason:"No longer needed",payment:"MC",notes:"declined save offer, canceled in db",reso:"Canceled",rep:"Geal",month:"05-2026",amount:14.99},
+  {date:"2026-05-05",rawDate:"5/5/2026",created:"5/5/2026",lob:"FollowSpy",email:"Justicejr65@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"No longer needed",payment:"VISA",notes:"declined save offer, canceled in db",reso:"Canceled",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-05",rawDate:"5/5/2026",created:"3/31/2027",lob:"FollowSpy",email:"sconchas04@gmail.com",plan:"Premium Weekly",status:"Cancelled",reason:"Renewal cx unaware",payment:"VISA",notes:"declined save offer, canceled in db",reso:"Canceled",rep:"Geal",month:"05-2026",amount:14.99},
+  {date:"2026-05-05",rawDate:"5/5/2026",created:"5/5/2026",lob:"FollowSpy",email:"Fatimashassan99@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"Service not as expected/Dissatisfied",payment:"AMEX",notes:"declined save offer, canceled in db",reso:"Canceled",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-05",rawDate:"5/5/2026",created:"5/5/2026",lob:"FollowSpy",email:"henna.shekel-5w@icloud.com",plan:"Premium Weekly",status:"Cancelled",reason:"Service not as expected/Dissatisfied",payment:"ApplePay",notes:"declined save offer, canceled in db",reso:"Canceled",rep:"Geal",month:"05-2026",amount:14.99},
+  {date:"2026-05-05",rawDate:"5/5/2026",created:"5/5/2026",lob:"FollowSpy",email:"nicholascharlesyoung95@gmail.com",plan:"Premium Weekly",status:"Cancelled",reason:"Service not as expected/Dissatisfied",payment:"VISA",notes:"cannot view private accounts",reso:"Canceled",rep:"Geal",month:"05-2026",amount:14.99},
+  {date:"2026-05-05",rawDate:"5/5/2026",created:"5/5/2026",lob:"FollowSpy",email:"Christoforoumariana16@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"No longer needed",payment:"ApplePay",notes:"declined save offer, canceled in db",reso:"Canceled",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-05",rawDate:"5/5/2026",created:"5/5/2026",lob:"FollowSpy",email:"henrickscarmela26968@icloud.com",plan:"Premium Weekly",status:"Cancelled",reason:"Service not as expected/Dissatisfied",payment:"VISA",notes:"declined save offer, canceled in db",reso:"Canceled",rep:"Geal",month:"05-2026",amount:14.99},
+  {date:"2026-05-05",rawDate:"5/5/2026",created:"5/5/2026",lob:"RecentFollow",email:"forevermel082@gmail.com",plan:"Elite V1 Weekly",status:"Cancelled",reason:"Service not as expected/Dissatisfied",payment:"N/A",notes:"declined save offer, canceled in db",reso:"Canceled",rep:"Geal",month:"05-2026",amount:29.99},
+  {date:"2026-05-05",rawDate:"5/5/2026",created:"04/07/2026",lob:"FollowSpy",email:"Aaronstevens7@icloud.com",plan:"Starter Quarterly",status:"Terminated",reason:"Accidental reg quarterly",payment:"ApplePay",notes:"was charged quarterly, wantst o acnel, declined save offers, termed in DB",reso:"Prorated Refund",rep:"Roy",month:"05-2026",amount:19.99},
+  {date:"2026-05-05",rawDate:"5/5/2026",created:"05/05/2026",lob:"FollowSpy",email:"Masteralnajjarq8@gmail.com",plan:"Premium Quarterly",status:"Terminated",reason:"Service not as expected/Dissatisfied",payment:"MC",notes:"declined save offer, terminated in db - unable to view private acct",reso:"Prorated Refund",rep:"Roy",month:"05-2026",amount:39.99},
+  {date:"2026-05-05",rawDate:"5/5/2026",created:"05/03/2026",lob:"FollowSpy",email:"kevinaubinkeke@gmail.com",plan:"Starter Quarterly",status:"Terminated",reason:"Accidental reg quarterly",payment:"MC",notes:"was charged quarterly, wantst o acnel, declined save offers, termed in DB",reso:"Prorated Refund",rep:"Roy",month:"05-2026",amount:19.99},
+  {date:"2026-05-05",rawDate:"5/5/2026",created:"05/04/2026",lob:"FollowSpy",email:"shomen@naver.com",plan:"Starter Quarterly",status:"Refunded",reason:"Service not as expected/Dissatisfied",payment:"MC",notes:"declined save offer, termed and refunded in DB",reso:"Refunded",rep:"Roy",month:"05-2026",amount:19.99},
+  {date:"2026-05-05",rawDate:"5/5/2026",created:"05/04/2026",lob:"FollowSpy",email:"doroshenkoi88bato@gmail.com",plan:"Starter Quarterly",status:"Terminated",reason:"Service not as expected/Dissatisfied",payment:"MC",notes:"declined save offer, termed n DB",reso:"Prorated Refund",rep:"Roy",month:"05-2026",amount:19.99},
+  {date:"2026-05-05",rawDate:"5/5/2026",created:"05/04/2026",lob:"FollowSpy",email:"juaninzze@msn.com",plan:"Starter Quarterly",status:"Refunded",reason:"Service not as expected/Dissatisfied",payment:"MC",notes:"declined save offer, termed and refunded in DB",reso:"Refunded",rep:"Roy",month:"05-2026",amount:19.99},
+  {date:"2026-05-05",rawDate:"5/5/2026",created:"02/11/2026",lob:"FollowSpy",email:"sidoreladdakaj@gmail.com",plan:"Premium Weekly",status:"Terminated",reason:"No longer needed",payment:"MC",notes:"declined save offer, termedin db",reso:"Resolved",rep:"Roy",month:"05-2026",amount:14.99},
+  {date:"2026-05-05",rawDate:"5/5/2026",created:"5/6/2026",lob:"FollowSpy",email:"jeaneboomz@gmail.com",plan:"Premium Quarterly",status:"Terminated",reason:"No longer needed",payment:"VISA",notes:"declined save offers, termed in DB",reso:"Terminated in DB",rep:"Roy",month:"05-2026",amount:39.99},
+  {date:"2026-05-05",rawDate:"5/5/2026",created:"10/09/2025",lob:"RecentFollow",email:"nicoledaboub@gmail.com",plan:"Expert Weekly",status:"Cancelled",reason:"No longer needed",payment:"VISA",notes:"declined save offers, canceled in DB",reso:"Canceled",rep:"Roy",month:"05-2026",amount:19.99},
+  {date:"2026-05-06",rawDate:"05/06/2026",created:"05/06/2026",lob:"FollowSpy",email:"Taj75@scarletmail.rutgers.edu",plan:"Starter Weekly",status:"Cancelled",reason:"No longer needed",payment:"ApplePay",notes:"declined save offers, canceled in DB",reso:"Canceled",rep:"Roy",month:"05-2026",amount:9.99},
+  {date:"2026-05-06",rawDate:"05/06/2026",created:"5/6/2026",lob:"FollowSpy",email:"mackenzieeiseman3@gmail.com",plan:"Premium Weekly",status:"Cancelled",reason:"No longer needed",payment:"ApplePay",notes:"declined save offers, canceled in DB",reso:"Canceled",rep:"Roy",month:"05-2026",amount:14.99},
+  {date:"2026-05-06",rawDate:"05/06/2026",created:"5/4/2026",lob:"FollowSpy",email:"1vladimir.malovik1@gmail.com",plan:"Starter Quarterly",status:"Refunded",reason:"Accidental reg quarterly",payment:"MC",notes:"cx accepted the DG offered and refund price diff",reso:"Refund Difference",rep:"Roy",month:"05-2026",amount:19.99},
+  {date:"2026-05-06",rawDate:"05/06/2026",created:"5/5/2026",lob:"FollowSpy",email:"evietorres07@gmail.com",plan:"Starter Quarterly",status:"Refunded",reason:"Accidental reg quarterly",payment:"VISA",notes:"cx accepted the DG offered and refund price diff",reso:"Refund Difference",rep:"Roy",month:"05-2026",amount:19.99},
+  {date:"2026-05-06",rawDate:"05/06/2026",created:"10/15/2025",lob:"FollowSpy",email:"selenacx131@gmail.com",plan:"Elite V1 Weekly",status:"Cancelled",reason:"CX DB Cancellation Issue",payment:"VISA",notes:"Cancelled in admin DB and Stripe",reso:"Canceled in Stripe",rep:"Geal",month:"05-2026",amount:29.99},
+  {date:"2026-05-06",rawDate:"05/06/2026",created:"4/26/2026",lob:"FollowSpy",email:"miljevicivan1@gmail.com",plan:"Starter Weekly",status:"Terminated",reason:"No longer needed",payment:"VISA",notes:"declined save offers, termed  in DB; emailed saying been charged again",reso:"Terminated in DB",rep:"Roy",month:"05-2026",amount:9.99},
+  {date:"2026-05-07",rawDate:"05/07/2026",created:"5/7/2026",lob:"FollowSpy",email:"tomasaranguizmunoz@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"No longer needed",payment:"MC",notes:"declined save offers, canceled in DB",reso:"Canceled",rep:"Roy",month:"05-2026",amount:9.99},
+  {date:"2026-05-07",rawDate:"05/07/2026",created:"5/6/2026",lob:"FollowSpy",email:"kdlondon196@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"No longer needed",payment:"ApplePay",notes:"declined save offers, canceled in DB",reso:"Canceled",rep:"Roy",month:"05-2026",amount:9.99},
+  {date:"2026-05-07",rawDate:"05/07/2026",created:"5/7/2026",lob:"FollowSpy",email:"saraiartellano14@gmail.com",plan:"Premium Weekly",status:"Cancelled",reason:"No longer needed",payment:"ApplePay",notes:"declined save offers, canceled in DB",reso:"Canceled",rep:"Ben",month:"05-2026",amount:14.99},
+  {date:"2026-05-07",rawDate:"05/07/2026",created:"05/07/2026",lob:"FollowSpy",email:"arwahussain0@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"Declined Save offer",payment:"VISA",notes:"declined save offers, canceled in DB",reso:"Canceled",rep:"Ben",month:"05-2026",amount:9.99},
+  {date:"2026-05-07",rawDate:"05/07/2026",created:"05/07/2026",lob:"FollowSpy",email:"fergsar@gmail.com",plan:"Starter Weekly",status:"Terminated",reason:"Declined Save offer",payment:"ApplePay",notes:"declined save offers, canceled in DB",reso:"Canceled",rep:"Ben",month:"05-2026",amount:9.99},
+  {date:"2026-05-08",rawDate:"05/08/2026",created:"5/7/2026",lob:"FollowSpy",email:"caneo.julia@yahoo.com",plan:"Premium Weekly",status:"Cancelled",reason:"Declined Save offer",payment:"MC",notes:"declined save offers, canceled in DB",reso:"Canceled",rep:"Roy",month:"05-2026",amount:14.99},
+  {date:"2026-05-08",rawDate:"05/08/2026",created:"10/10/2025",lob:"FollowSpy",email:"gibsonkatie200@gmail.com",plan:"Elite V1 Weekly",status:"Cancelled",reason:"Declined Save offer",payment:"MC",notes:"email sent through dan@recentfollow.com requesting cancelaiton",reso:"Canceled in Stripe",rep:"Roy",month:"05-2026",amount:29.99},
+  {date:"2026-05-08",rawDate:"05/08/2026",created:"5/5/2026",lob:"RecentFollow",email:"vivianbui9@gmail.com",plan:"Expert Quarterly",status:"Refunded",reason:"Accidental reg quarterly",payment:"VISA",notes:"declined save offers, canceled in DB, cx is already disputing with their bank, term and refunded in db but refund not reflecting in OP. Manually refunded in OP.",reso:"Terminated and Refunded",rep:"Geal",month:"05-2026",amount:59.99},
+  {date:"2026-05-08",rawDate:"05/08/2026",created:"05/08/2026",lob:"FollowSpy",email:"mickeymatar2@gmail.com",plan:"Premium Quarterly",status:"Refunded",reason:"Accidental reg quarterly",payment:"Paypal",notes:"Cx insisted to have full refund, not aware of the charge on quarterly plan. declined all save offer. PAYPAL account *no acocunt in db*",reso:"Terminated and Refunded",rep:"Geal",month:"05-2026",amount:39.99},
+  {date:"2026-05-08",rawDate:"05/08/2026",created:"05/01/2026",lob:"FollowSpy",email:"wjswnddk217@gmail.com",plan:"Premium Weekly",status:"Cancelled",reason:"No longer needed",payment:"MC",notes:"no longer need, unable to cancel on their end. Canceled in db",reso:"Canceled",rep:"Geal",month:"05-2026",amount:14.99},
+  {date:"2026-05-08",rawDate:"05/08/2026",created:"05/01/2026",lob:"FollowSpy",email:"vanessalam0401@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"Service not as expected/Dissatisfied",payment:"ApplePay",notes:"unable to view private accounts, declined save offer",reso:"Canceled",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-08",rawDate:"05/08/2026",created:"05/08/2026",lob:"FollowSpy",email:"yonexyasuozijnbetter@gmail.com",plan:"Premium Weekly",status:"Cancelled",reason:"No longer needed",payment:"Other",notes:"expensive, declined save offer, cx can't cancel on their end. canceled in db",reso:"Canceled",rep:"Geal",month:"05-2026",amount:14.99},
+  {date:"2026-05-08",rawDate:"05/08/2026",created:"05/08/2026",lob:"FollowSpy",email:"Cuartasaura1@gmail.com",plan:"Premium Weekly",status:"Cancelled",reason:"Service not as expected/Dissatisfied",payment:"VISA",notes:"unable to view private accounts, declined save offer",reso:"Canceled",rep:"Geal",month:"05-2026",amount:14.99},
+  {date:"2026-05-09",rawDate:"05/09/2026",created:"4/4/2026",lob:"RecentFollow",email:"Cmaltby11@gmail.com",plan:"Elite V1 Weekly",status:"Cancelled",reason:"No longer needed",payment:"Other",notes:"unable to cancel on their end. wants to confirm if it has been canceled",reso:"Canceled in Stripe",rep:"Geal",month:"05-2026",amount:29.99},
+  {date:"2026-05-09",rawDate:"05/09/2026",created:"8/3/2025",lob:"RecentFollow",email:"tristan.henriquez@yahoo.com",plan:"Elite V1 Weekly",status:"Cancelled",reason:"No longer needed",payment:"AMEX",notes:"showing free subs on their end. cx declined save offer",reso:"Canceled in Stripe",rep:"Geal",month:"05-2026",amount:29.99},
+  {date:"2026-05-09",rawDate:"05/09/2026",created:"05/09/2026",lob:"FollowSpy",email:"michaelsandhas16@icloud.com",plan:"Premium Lifetime",status:"Cancelled",reason:"Declined Save offer",payment:"ApplePay",notes:"cx wants to cancel, unable to cancel on their end. Cx has charges in db for $9 and $90 but no subscription is showing to DB and OP",reso:"Escalated",rep:"Geal",month:"05-2026",amount:0},
+  {date:"2026-05-09",rawDate:"05/09/2026",created:"05/09/2026",lob:"FollowSpy",email:"omgwork9@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"Service not as expected/Dissatisfied",payment:"ApplePay",notes:"unable to view private accounts, declined save offer",reso:"Canceled",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-09",rawDate:"05/09/2026",created:"05/09/2026",lob:"FollowSpy",email:"Ashleyversanti@yahoo.com",plan:"Starter Weekly",status:"Cancelled",reason:"Service not as expected/Dissatisfied",payment:"ApplePay",notes:"unable to view private accounts, declined save offer",reso:"Canceled",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-09",rawDate:"05/09/2026",created:"4/23/2026",lob:"FollowSpy",email:"meghannconnelly23@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"No longer needed",payment:"ApplePay",notes:"can't log in, declined save offer",reso:"Canceled",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-09",rawDate:"05/09/2026",created:"05/09/2026",lob:"FollowSpy",email:"cerys.fitzpatrick@hotmail.co.uk",plan:"Premium Weekly",status:"Cancelled",reason:"Service not as expected/Dissatisfied",payment:"ApplePay",notes:"unable to view private accounts, cx was asking for refund-pushback, declined save offer",reso:"Canceled",rep:"Geal",month:"05-2026",amount:14.99},
+  {date:"2026-05-09",rawDate:"05/09/2026",created:"12/15/2025",lob:"RecentFollow",email:"cambriamarie14@gmail.com",plan:"Expert Weekly",status:"Cancelled",reason:"Renewal cx unaware",payment:"ApplePay",notes:"not aware of the renewal, cx declined save offer and still wants to cancel",reso:"Canceled",rep:"Geal",month:"05-2026",amount:19.99},
+  {date:"2026-05-09",rawDate:"05/09/2026",created:"04/26/2026",lob:"FollowSpy",email:"brianfajarfo08@hotmail.com",plan:"Premium Weekly",status:"Refunded",reason:"Login Issue",payment:"ApplePay",notes:"cx has wrong email address on their subs, canceled in db, asked to reregiter with the correct email address and we will process refund.cx has wrong email address on their subs, canceled in db, asked to reregiter with the correct email address. term and refunded",reso:"Refunded",rep:"Geal",month:"05-2026",amount:14.99},
+  {date:"2026-05-09",rawDate:"05/09/2026",created:"05/09/2026",lob:"FollowSpy",email:"Vsgndk@gmail.com",plan:"Premium Weekly",status:"Cancelled",reason:"No longer needed",payment:"ApplePay",notes:"unable to cancel, no longer need, declined save offer. canceled in db",reso:"Canceled",rep:"Geal",month:"05-2026",amount:14.99},
+  {date:"2026-05-09",rawDate:"05/09/2026",created:"05/09/2026",lob:"FollowSpy",email:"Oscargarciamd@icloud.com",plan:"Starter Weekly",status:"Cancelled",reason:"Service not as expected/Dissatisfied",payment:"ApplePay",notes:"unable to see stories, declined save offer. canceled in db",reso:"Canceled",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-09",rawDate:"05/09/2026",created:"05/09/2026",lob:"FollowSpy",email:"serchmendivil584@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"No longer needed",payment:"ApplePay",notes:"no longer need, declined save offer.",reso:"Canceled",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-10",rawDate:"05/10/2026",created:"5/16/2025",lob:"RecentFollow",email:"rasheemmon@gmail.com",plan:"Elite V1 Weekly",status:"Cancelled",reason:"No longer needed",payment:"VISA",notes:"no longer need, declined save offer.",reso:"Canceled in Stripe",rep:"Geal",month:"05-2026",amount:29.99},
+  {date:"2026-05-10",rawDate:"05/10/2026",created:"1/11/2026",lob:"RecentFollow",email:"Ryliz2003@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"No longer needed",payment:"ApplePay",notes:"no longer need, declined save offer.",reso:"Canceled",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-10",rawDate:"05/10/2026",created:"05/06/2026",lob:"RecentFollow",email:"chloe.coss5@gmail.com",plan:"Expert Weekly",status:"Cancelled",reason:"No longer needed",payment:"ApplePay",notes:"no longer need, declined save offer.",reso:"Canceled",rep:"Geal",month:"05-2026",amount:19.99},
+  {date:"2026-05-10",rawDate:"05/10/2026",created:"05/10/2026",lob:"FollowSpy",email:"staceynyoho@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"CX DB Cancellation Issue",payment:"VISA",notes:"accidental purchase, declined save offer",reso:"Canceled",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-10",rawDate:"05/10/2026",created:"4/27/2026",lob:"RecentFollow",email:"marianastase176@gmail.com",plan:"Expert Weekly",status:"Terminated",reason:"Renewal cx unaware",payment:"VISA",notes:"cx said that they canceled before the renewal and was given free subscription, declined to pay past due and declined save offer",reso:"Terminated in DB",rep:"Geal",month:"05-2026",amount:19.99},
+  {date:"2026-05-10",rawDate:"05/10/2026",created:"05/10/2026",lob:"FollowSpy",email:"Itslilkarii313@gmail.com",plan:"Premium Weekly",status:"Cancelled",reason:"Service not as expected/Dissatisfied",payment:"MC",notes:"unable to view private stories. declined save offer",reso:"Canceled",rep:"Geal",month:"05-2026",amount:14.99},
+  {date:"2026-05-10",rawDate:"05/10/2026",created:"05/10/2026",lob:"FollowSpy",email:"paigedw12@yahoo.com",plan:"Starter Weekly",status:"Cancelled",reason:"Cancel Req",payment:"ApplePay",notes:"accidental purchase, declined save offer",reso:"Canceled",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-10",rawDate:"05/10/2026",created:"05/10/2026",lob:"FollowSpy",email:"samreen.islam@outlook.com",plan:"Premium Weekly",status:"Cancelled",reason:"Service not as expected/Dissatisfied",payment:"VISA",notes:"hey expect to be something else, declined save offer",reso:"Canceled",rep:"Geal",month:"05-2026",amount:14.99},
+  {date:"2026-05-10",rawDate:"05/10/2026",created:"05/10/2026",lob:"FollowSpy",email:"barbermichael717@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"Cancel Req",payment:"MC",notes:"accidental purchase, declined save offer",reso:"Canceled",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-11",rawDate:"5/11/2026",created:"04/29/2026",lob:"FollowSpy",email:"seanvkab@gmail.com",plan:"Other - No Acct",status:"Cancelled",reason:"Cancel Req",payment:"N/A",notes:"requested to cancel, changed status in DB no active acct in OP",reso:"Canceled",rep:"Roy",month:"05-2026",amount:0},
+  {date:"2026-05-11",rawDate:"5/11/2026",created:"04/30/2026",lob:"RecentFollow",email:"carolineashleydaily@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"CX DB Cancellation Issue",payment:"ApplePay",notes:"cx acct still active after canceling, declined save offers",reso:"Canceled",rep:"Roy",month:"05-2026",amount:9.99},
+  {date:"2026-05-11",rawDate:"5/11/2026",created:"5/11/2026",lob:"FollowSpy",email:"Sanjuanlesli20@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"CX DB Cancellation Issue",payment:"VISA",notes:"declined save offer; requesting to cancel",reso:"Escalated",rep:"Jessica",month:"05-2026",amount:9.99},
+  {date:"2026-05-11",rawDate:"5/11/2026",created:"3/6/2026",lob:"RecentFollow",email:"Alondraaguilar9600@gmail.com",plan:"Expert Weekly",status:"Cancelled",reason:"Renewal cx unaware",payment:"ApplePay",notes:"unable to cancel on their end, declined save offer",reso:"Canceled in OP",rep:"Geal",month:"05-2026",amount:19.99},
+  {date:"2026-05-11",rawDate:"5/11/2026",created:"5/3/2026",lob:"RecentFollow",email:"elinschytzer@hotmail.com",plan:"Expert Weekly",status:"Cancelled",reason:"Login Issue",payment:"ApplePay",notes:"unable to log in, typo error in the email address in subs, canceled in db",reso:"Canceled",rep:"Geal",month:"05-2026",amount:19.99},
+  {date:"2026-05-11",rawDate:"5/11/2026",created:"5/10/2026",lob:"FollowSpy",email:"ircarbajal01@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"No longer needed",payment:"VISA",notes:"declined save offer, canceled in db",reso:"Canceled",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-11",rawDate:"5/11/2026",created:"5/11/2026",lob:"FollowSpy",email:"Haloubghofran@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"Service not as expected/Dissatisfied",payment:"ApplePay",notes:"unable to view private accounts, declined save offer. pushback, canceled in db",reso:"Canceled",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-11",rawDate:"5/11/2026",created:"5/11/2026",lob:"FollowSpy",email:"Mauraatatianaa@gmail.com",plan:"Premium Weekly",status:"Cancelled",reason:"Service not as expected/Dissatisfied",payment:"ApplePay",notes:"unable to view private accounts, declined save offer, canceled in db",reso:"Canceled",rep:"Geal",month:"05-2026",amount:14.99},
+  {date:"2026-05-11",rawDate:"5/11/2026",created:"5/11/2026",lob:"FollowSpy",email:"Fevillaizan@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"Service not as expected/Dissatisfied",payment:"ApplePay",notes:"unable to view private accounts, declined save offer, canceled in db",reso:"Canceled",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-11",rawDate:"5/11/2026",created:"5/11/2026",lob:"FollowSpy",email:"idc.kaushik@gmail.com",plan:"Premium Weekly",status:"Cancelled",reason:"No longer needed",payment:"VISA",notes:"no longer need, declined save offer.",reso:"Canceled",rep:"Geal",month:"05-2026",amount:14.99},
+  {date:"2026-05-11",rawDate:"5/11/2026",created:"5/11/2026",lob:"FollowSpy",email:"Sam7girl@yahoo.com",plan:"Starter Weekly",status:"Cancelled",reason:"No longer needed",payment:"ApplePay",notes:"no longer need, declined save offer.",reso:"Canceled",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-11",rawDate:"5/11/2026",created:"5/11/2026",lob:"FollowSpy",email:"helmarchh@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"Service not as expected/Dissatisfied",payment:"VISA",notes:"unable to view private accounts, declined save offer, canceled in db",reso:"Canceled",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-11",rawDate:"5/11/2026",created:"5/11/2026",lob:"FollowSpy",email:"Shabroushan20@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"Service not as expected/Dissatisfied",payment:"ApplePay",notes:"unable to view private accounts, declined save offer, canceled in db",reso:"Canceled",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-11",rawDate:"5/11/2026",created:"5/11/2026",lob:"FollowSpy",email:"Akashawilson30@gmail.com",plan:"Premium Weekly",status:"Cancelled",reason:"No longer needed",payment:"ApplePay",notes:"only needed for 1 day, declined save offer, canceled in db",reso:"Canceled",rep:"Geal",month:"05-2026",amount:14.99},
+  {date:"2026-05-11",rawDate:"5/11/2026",created:"4/30/2026",lob:"RecentFollow",email:"mollyblack28@yahoo.com",plan:"Starter Weekly",status:"Cancelled",reason:"Renewal cx unaware",payment:"ApplePay",notes:"not aware of the renewal, unablle to login, cx declined save offer and still wants to cancel",reso:"Canceled",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-11",rawDate:"5/11/2026",created:"4/30/2026",lob:"RecentFollow",email:"kprincess6551@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"Service not as expected/Dissatisfied",payment:"ApplePay",notes:"not the service they expected, declined save offer, canceled in db",reso:"Canceled",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-12",rawDate:"5/12/2026",created:"5/11/2026",lob:"FollowSpy",email:"rbirinder@gmail.com",plan:"Premium Weekly",status:"Cancelled",reason:"No longer needed",payment:"ApplePay",notes:"no longer need, declined save offer.",reso:"Canceled",rep:"Roy",month:"05-2026",amount:14.99},
+  {date:"2026-05-12",rawDate:"5/12/2026",created:"10/29/2026",lob:"RecentFollow",email:"ciralex@icloud.com",plan:"Expert Weekly",status:"Cancelled",reason:"No longer needed",payment:"ApplePay",notes:"cx req to cancel, declined save offers. Canceled in OP",reso:"Canceled in OP",rep:"Roy",month:"05-2026",amount:19.99},
+  {date:"2026-05-12",rawDate:"5/12/2026",created:"04/21/2026",lob:"FollowSpy",email:"ryry19222@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"Declined Save offer",payment:"ApplePay",notes:"no longer need, declined save offer.",reso:"Canceled",rep:"Roy",month:"05-2026",amount:9.99},
+  {date:"2026-05-12",rawDate:"5/12/2026",created:"4/13/2026",lob:"FollowSpy",email:"gabbyy_96@yahoo.com",plan:"Starter Weekly",status:"Refunded",reason:"Duplicate",payment:"ApplePay",notes:"Acct canceled in DB but is active in OP, refund most recent charge",reso:"Refunded",rep:"Roy",month:"05-2026",amount:9.99},
+  {date:"2026-05-12",rawDate:"5/12/2026",created:"1/10/2026",lob:"FollowSpy",email:"marisol.mmata@gmail.com",plan:"Premium Weekly",status:"Cancelled",reason:"Declined Save offer",payment:"ApplePay",notes:"Acct is PD in DB and declined save offers, manually canceled in OP",reso:"Canceled in OP",rep:"Roy",month:"05-2026",amount:14.99},
+  {date:"2026-05-12",rawDate:"5/12/2026",created:"3/12/2025",lob:"RecentFollow",email:"erputerbaugh@gmail.com",plan:"Elite V1 Weekly",status:"Cancelled",reason:"No longer needed",payment:"Paypal",notes:"no longer need, unable to cancel on their end. Canceled in stripe",reso:"Canceled in Stripe",rep:"Geal",month:"05-2026",amount:29.99},
+  {date:"2026-05-12",rawDate:"5/12/2026",created:"5/12/2026",lob:"FollowSpy",email:"patriciafernandescosta@gmail.com",plan:"Premium Weekly",status:"Cancelled",reason:"Service not as expected/Dissatisfied",payment:"VISA",notes:"can't view stories, declined save offer",reso:"Canceled",rep:"Geal",month:"05-2026",amount:14.99},
+  {date:"2026-05-12",rawDate:"5/12/2026",created:"4/27/2026",lob:"RecentFollow",email:"mstotts1@email.arizona.edu",plan:"Elite V1 Weekly",status:"Cancelled",reason:"No longer needed",payment:"Other",notes:"can't cancel on their end, no longer need",reso:"Canceled in Stripe",rep:"Geal",month:"05-2026",amount:29.99},
+  {date:"2026-05-12",rawDate:"5/12/2026",created:"5/4/2026",lob:"RecentFollow",email:"gabylararealty@gmail.com",plan:"Expert Quarterly",status:"Cancelled",reason:"No longer needed",payment:"ApplePay",notes:"no longer need, unable to cancel on their end",reso:"Canceled",rep:"Geal",month:"05-2026",amount:59.99},
+  {date:"2026-05-12",rawDate:"5/12/2026",created:"5/2/2026",lob:"RecentFollow",email:"rainbowsmoke1@gmail.com",plan:"Expert Weekly",status:"Past Due",reason:"Renewal cx unaware",payment:"VISA",notes:"past due, no longer need, declined save offer",reso:"Canceled in OP",rep:"Geal",month:"05-2026",amount:19.99},
+  {date:"2026-05-12",rawDate:"5/12/2026",created:"5/12/2026",lob:"FollowSpy",email:"sofiia.rogovaya@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"No longer needed",payment:"ApplePay",notes:"can't cancel on their end, no longer need",reso:"Canceled",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-12",rawDate:"5/12/2026",created:"8/30/2025",lob:"RecentFollow",email:"krystalmrod@icloud.com",plan:"Elite V1 Weekly",status:"Cancelled",reason:"Cancel Req",payment:"VISA",notes:"can't cancel on their end, no longer need",reso:"Canceled in Stripe",rep:"Geal",month:"05-2026",amount:29.99},
+  {date:"2026-05-12",rawDate:"5/12/2026",created:"5/12/2026",lob:"FollowSpy",email:"adrielfs18@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"No longer needed",payment:"ApplePay",notes:"already seen the account the needed account, declined save offer",reso:"Canceled",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-12",rawDate:"5/12/2026",created:"5/12/2026",lob:"FollowSpy",email:"kaydenaikens7@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"Service not as expected/Dissatisfied",payment:"ApplePay",notes:"does not work but did not elaborate the issue, declined save offer",reso:"Canceled",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-12",rawDate:"5/12/2026",created:"5/12/2026",lob:"FollowSpy",email:"geritoguti@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"Cancel Req",payment:"VISA",notes:"no longer need, declined save offer.",reso:"Canceled",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-12",rawDate:"5/12/2026",created:"5/12/2026",lob:"FollowSpy",email:"Itzzelcruz1@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"Cancel Req",payment:"ApplePay",notes:"accidental purchase, declined save offer",reso:"Canceled",rep:"Geal",month:"05-2026",amount:9.99},
+  {date:"2026-05-12",rawDate:"5/12/2026",created:"5/12/2026",lob:"FollowSpy",email:"Lgeventsandinterior@gmail.com",plan:"Premium Weekly",status:"Cancelled",reason:"Service not as expected/Dissatisfied",payment:"ApplePay",notes:"cx wants to cancel, not what they thought",reso:"Canceled",rep:"Geal",month:"05-2026",amount:14.99},
+  {date:"2026-05-12",rawDate:"5/12/2026",created:"5/12/2026",lob:"FollowSpy",email:"Marcmontoya101@gmail.com",plan:"Premium Weekly",status:"Cancelled",reason:"Service not as expected/Dissatisfied",payment:"ApplePay",notes:"cx wants to cancel, it does not work, declined save offer",reso:"Canceled",rep:"Geal",month:"05-2026",amount:14.99},
+  {date:"2026-05-13",rawDate:"5/13/2026",created:"05/09/2026",lob:"FollowSpy",email:"heibibaby7@gmail.com",plan:"Premium Quarterly",status:"Terminated",reason:"Accepted Prorate refund quarterly save",payment:"MC",notes:"cx accepted the Term and prorated refund offer",reso:"Prorated Refund",rep:"Roy",month:"05-2026",amount:39.99},
+  {date:"2026-05-13",rawDate:"5/13/2026",created:"05/12/2026",lob:"FollowSpy",email:"daisyluview@gmail.com",plan:"Premium Quarterly",status:"Refunded",reason:"Accepted DG weekly save",payment:"MC",notes:"CX accepted the DG offered and refund price diff",reso:"Refund Difference",rep:"Roy",month:"05-2026",amount:39.99},
+  {date:"2026-05-13",rawDate:"5/13/2026",created:"10/13/2025",lob:"RecentFollow",email:"rozzi913@gmail.com",plan:"Elite V1 Weekly",status:"Terminated",reason:"No longer needed",payment:"AMEX",notes:"cx requsted to perm delete the acct, declined save offer",reso:"Canceled in Stripe",rep:"Roy",month:"05-2026",amount:29.99},
+  {date:"2026-05-13",rawDate:"5/13/2026",created:"11/28/2025",lob:"RecentFollow",email:"heidygleon23@gmail.com",plan:"Elite V1 Weekly",status:"Cancelled",reason:"CX DB Cancellation Issue",payment:"Other",notes:"cx requested to cncel, declined save offers",reso:"Canceled in Stripe",rep:"Roy",month:"05-2026",amount:29.99},
+  {date:"2026-05-13",rawDate:"5/13/2026",created:"02/22/2026",lob:"RecentFollow",email:"anastasiiamelnyk31@gmail.com",plan:"Expert Weekly",status:"Terminated",reason:"No longer needed",payment:"ApplePay",notes:"ca requested to cancel the aacct, declined save offers.",reso:"Canceled in OP",rep:"Roy",month:"05-2026",amount:19.99},
+  {date:"2026-05-13",rawDate:"5/13/2026",created:"5/12/2026",lob:"FollowSpy",email:"mertcanerlat00@gmail.com",plan:"Starter Weekly",status:"Terminated",reason:"Declined Save offer",payment:"MC",notes:"confirmed acct closure despite offers and implications",reso:"Terminated in DB",rep:"Jessica",month:"05-2026",amount:9.99},
+  {date:"2026-05-13",rawDate:"5/13/2026",created:"5/5/2026",lob:"RecentFollow",email:"elamordemisabuelitos@gmail.com",plan:"Starter Quarterly",status:"Active",reason:"Accepted Credit quarterly save",payment:"ApplePay",notes:"accepted the $10 credit",reso:"Accepted Save Offer",rep:"Jessica",month:"05-2026",amount:19.99},
+  {date:"2026-05-13",rawDate:"5/13/2026",created:"5/13/2026",lob:"FollowSpy",email:"duquaine.dylan93@gmail.com",plan:"Premium Weekly",status:"Cancelled",reason:"Declined Save offer",payment:"VISA",notes:"cx requested to cncel, declined save offers",reso:"Canceled",rep:"Ben",month:"05-2026",amount:14.99},
+  {date:"2026-05-14",rawDate:"5/14/2026",created:"10/09/0206",lob:"RecentFollow",email:"melek-ktk-2011@hotmail.com",plan:"Elite V1 Weekly",status:"Cancelled",reason:"No longer needed",payment:"MC",notes:"cx requested to cncel, declined save offers",reso:"Canceled in Stripe",rep:"Roy",month:"05-2026",amount:29.99},
+  {date:"2026-05-14",rawDate:"5/14/2026",created:"05/11/2026",lob:"FollowSpy",email:"Edgardavendanom@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"No longer needed",payment:"VISA",notes:"cx requested to cncel, declined save offers",reso:"Canceled",rep:"Roy",month:"05-2026",amount:9.99},
+  {date:"5/142026",rawDate:"5/142026",created:"04/28/2026",lob:"FollowSpy",email:"Catrinffionlewis@outlook.com",plan:"Starter Weekly",status:"Cancelled",reason:"No longer needed",payment:"ApplePay",notes:"cx requested to cancel, declined save offers",reso:"Canceled",rep:"Roy",month:"05-2026",amount:9.99},
+  {date:"2026-05-14",rawDate:"5/14/2026",created:"05/13/2026",lob:"FollowSpy",email:"chantelhumphreys@gmail.com",plan:"Premium Weekly",status:"Cancelled",reason:"Declined Save offer",payment:"ApplePay",notes:"cx requested to cancel, declined save offers",reso:"Canceled",rep:"Roy",month:"05-2026",amount:14.99},
+  {date:"2026-05-14",rawDate:"5/14/2026",created:"05/13/2026",lob:"FollowSpy",email:"jayeshbaid7@gmail.com",plan:"Starter Quarterly",status:"Refunded",reason:"Service not as expected/Dissatisfied",payment:"VISA",notes:"cx accepted the term and prorated refund offered",reso:"Prorated Refund",rep:"Roy",month:"05-2026",amount:19.99},
+  {date:"2026-05-14",rawDate:"05/14/2026",created:"04/05/2026",lob:"FollowSpy",email:"evolvewithin@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"No longer needed",payment:"Discover",notes:"cx requested to cancel, declined save offers",reso:"Canceled",rep:"Roy",month:"05-2026",amount:9.99},
+  {date:"2026-05-14",rawDate:"05/14/2026",created:"4/6/2026",lob:"RecentFollow",email:"oliviajurado1221@gmail.com",plan:"Expert Weekly",status:"Cancelled",reason:"Declined Save offer",payment:"ApplePay",notes:"cx requested to cancel, declined save offers",reso:"Canceled in OP",rep:"Jessica",month:"05-2026",amount:19.99},
+  {date:"2026-05-14",rawDate:"05/14/2026",created:"5/13/2026",lob:"FollowSpy",email:"omboyralph05@gmail.com",plan:"Expert Quarterly",status:"Cancelled",reason:"Declined Save offer",payment:"VISA",notes:"cx requested to cancel, declined save offers",reso:"Canceled in OP",rep:"Jessica",month:"05-2026",amount:59.99},
+  {date:"2026-05-14",rawDate:"5/14/2026",created:"02/18/2026",lob:"FollowSpy",email:"peekviewer.3ktsd@passmail.net",plan:"Premium Weekly",status:"Terminated",reason:"No longer needed",payment:"GooglePay",notes:"cx requestd to cancel the acct immed, declined save offers",reso:"Terminated in DB",rep:"Roy",month:"05-2026",amount:14.99},
+  {date:"2026-05-14",rawDate:"5/14/2026",created:"5/14/2026",lob:"FollowSpy",email:"awholenewworldwithyou2.sa@gmail.com",plan:"Starter Weekly",status:"Cancelled",reason:"Declined Save offer",payment:"VISA",notes:"cx requested to cancel, declined save offers",reso:"Canceled in OP",rep:"Jessica",month:"05-2026",amount:9.99},
+  {date:"2026-05-14",rawDate:"5/14/2026",created:"5/14/2026",lob:"FollowSpy",email:"agusamarillafernandez381@gmail.com",plan:"Starter Quarterly",status:"Terminated",reason:"Accidental reg quarterly",payment:"VISA",notes:"cx requested to cancel, declined save offers",reso:"Canceled",rep:"Ben",month:"05-2026",amount:19.99},
+  {date:"2026-05-14",rawDate:"5/14/2026",created:"4/13/2026",lob:"RecentFollow",email:"ruanwendy@ymail.com",plan:"Elite V1 Weekly",status:"Terminated",reason:"No longer needed",payment:"Discover",notes:"cx requested to cancel, declined save offers",reso:"Terminated in DB",rep:"Ben",month:"05-2026",amount:29.99},
+  {date:"2026-05-15",rawDate:"5/15/2026",created:"05/13/2026",lob:"FollowSpy",email:"babyfacecayy@gmail.com",plan:"Premium Weekly",status:"Refunded",reason:"No longer needed",payment:"VISA",notes:"CX declined save offers and wants full refund - awx",reso:"Refunded",rep:"Roy",month:"05-2026",amount:14.99},
+  {date:"2026-05-15",rawDate:"5/15/2026",created:"03/10/2026",lob:"FollowSpy",email:"nyaparks3786@icloud.com",plan:"Premium Weekly",status:"Cancelled",reason:"No longer needed",payment:"VISA",notes:"cx requested to cancel, declined save offers",reso:"Canceled",rep:"Roy",month:"05-2026",amount:14.99},
+  {date:"2026-05-15",rawDate:"5/15/2026",created:"03/24/2026",lob:"FollowSpy",email:"piotr.stoklosa@gmail.com",plan:"Premium Weekly",status:"Cancelled",reason:"No longer needed",payment:"VISA",notes:"cx requested to cancel, declined save offers",reso:"Canceled",rep:"Roy",month:"05-2026",amount:14.99},
+  {date:"2026-05-15",rawDate:"05/15/2026",created:"10/09/2025",lob:"RecentFollow",email:"Ninakarengud@gmail.com",plan:"Elite V1 Weekly",status:"Cancelled",reason:"Declined Save offer",payment:"MC",notes:"cx requested to cancel, declined save offers",reso:"Canceled in Stripe",rep:"Roy",month:"05-2026",amount:29.99},
+  {date:"2026-05-15",rawDate:"05/15/2026",created:"10/09/2026",lob:"RecentFollow",email:"kellagaston@gmail.com",plan:"Elite V1 Weekly",status:"Cancelled",reason:"Declined Save offer",payment:"N/A",notes:"cx requested to cancel, declined save offers",reso:"Canceled in Stripe",rep:"Roy",month:"05-2026",amount:29.99},
+  {date:"2026-05-15",rawDate:"05/15/2026",created:"10/9/2025",lob:"RecentFollow",email:"quantnex5@gmail.com",plan:"Expert Weekly",status:"Cancelled",reason:"Cancel Req",payment:"Paypal",notes:"cx requested to cancel",reso:"Canceled in OP",rep:"Jessica",month:"05-2026",amount:19.99},
+  {date:"2026-05-15",rawDate:"05/15/2026",created:"05/15/2026",lob:"FollowSpy",email:"anonymaerlig8@gmail.com",plan:"Starter Quarterly",status:"Terminated",reason:"Accidental reg quarterly",payment:"ApplePay",notes:"cx is not aware of the upgrade, asking for refund. cx accepted the offer to term and have partial refund (1 week of service will be collected) Airwallex",reso:"Prorated Refund",rep:"Geal",month:"05-2026",amount:19.99},
+  {date:"2026-05-15",rawDate:"5/15/2026",created:"1/28/2026",lob:"RecentFollow",email:"richards2111yt@gmail.com",plan:"Expert Weekly",status:"Cancelled",reason:"Duplicate",payment:"ApplePay",notes:"cx is not aware of the other account, on this account cx also have duplicate subscription declined save offer, canceled in OP as the sub is showing canceled in db",reso:"Canceled in OP",rep:"Geal",month:"05-2026",amount:19.99},
+  {date:"2026-05-16",rawDate:"5/16/2026",created:"11/24/2025",lob:"RecentFollow",email:"annierc493@gmail.com",plan:"Expert Weekly",status:"Cancelled",reason:"Duplicate",payment:"ApplePay",notes:"duplcate charges. 5 active weekly subscription, advised that we can only refund the 5 most recent charges, airwallex",reso:"Canceled",rep:"Geal",month:"05-2026",amount:19.99}
 ];
 
-// --- State ---
-let filteredData = [...RAW_DATA];
-let sortKey = 'date';
-let sortDir = -1; // -1 = desc
+let charts = {};
+let sortCol = 'date', sortDir = 1;
 
-let chartReason, chartReso, chartPayment, chartDaily;
-
-function fmt(val) {
-  if (!val || val === 0) return '—';
-  return '$' + val.toFixed(2);
-}
-function fmtTotal(val) {
-  return '$' + val.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-}
-
-function initFilters() {
-  const resos = [...new Set(RAW_DATA.map(r => r.reso))].sort();
-  const agents = [...new Set(RAW_DATA.map(r => r.agent))].sort();
-  const payments = [...new Set(RAW_DATA.map(r => r.payment))].sort();
-
-  const resoSel = document.getElementById('filter-reso');
-  const agentSel = document.getElementById('filter-agent');
-  const paymentSel = document.getElementById('filter-payment');
-
-  resos.forEach(r => { const o = document.createElement('option'); o.value = r; o.text = r; resoSel.appendChild(o); });
-  agents.forEach(a => { const o = document.createElement('option'); o.value = a; o.text = a; agentSel.appendChild(o); });
-  payments.forEach(p => { const o = document.createElement('option'); o.value = p; o.text = p; paymentSel.appendChild(o); });
-
-  // Set default date range
-  const dates = RAW_DATA.map(r => r.date).sort();
-  document.getElementById('date-from').value = dates[0];
-  document.getElementById('date-to').value = dates[dates.length - 1];
-
-  document.getElementById('last-updated').textContent = 'Data as of Jun 12, 2026';
-}
-
-function applyFilters() {
-  const from = document.getElementById('date-from').value;
-  const to = document.getElementById('date-to').value;
-  const lob = document.getElementById('filter-lob').value;
-  const reso = document.getElementById('filter-reso').value;
-  const agent = document.getElementById('filter-agent').value;
-  const payment = document.getElementById('filter-payment').value;
-
-  filteredData = RAW_DATA.filter(r => {
+function getFiltered() {
+  const from = document.getElementById('dateFrom').value;
+  const to = document.getElementById('dateTo').value;
+  const lob = document.getElementById('filterLob').value;
+  const reso = document.getElementById('filterReso').value;
+  const reason = document.getElementById('filterReason').value;
+  const payment = document.getElementById('filterPayment').value;
+  const rep = document.getElementById('filterRep').value;
+  return DATA.filter(r => {
     if (from && r.date < from) return false;
     if (to && r.date > to) return false;
     if (lob && r.lob !== lob) return false;
     if (reso && r.reso !== reso) return false;
-    if (agent && r.agent !== agent) return false;
+    if (reason && r.reason !== reason) return false;
     if (payment && r.payment !== payment) return false;
+    if (rep && r.rep !== rep) return false;
     return true;
   });
-
-  sortData();
-  renderAll();
 }
 
-function resetFilters() {
-  const dates = RAW_DATA.map(r => r.date).sort();
-  document.getElementById('date-from').value = dates[0];
-  document.getElementById('date-to').value = dates[dates.length - 1];
-  document.getElementById('filter-lob').value = '';
-  document.getElementById('filter-reso').value = '';
-  document.getElementById('filter-agent').value = '';
-  document.getElementById('filter-payment').value = '';
-  filteredData = [...RAW_DATA];
-  sortData();
-  renderAll();
-}
-
-function sortTable(key) {
-  if (sortKey === key) sortDir *= -1;
-  else { sortKey = key; sortDir = 1; }
-  sortData();
-  renderTable();
-}
-
-function sortData() {
-  filteredData.sort((a, b) => {
-    let va = a[sortKey] ?? '';
-    let vb = b[sortKey] ?? '';
-    if (sortKey === 'amount') return (va - vb) * sortDir;
-    return String(va).localeCompare(String(vb)) * sortDir;
-  });
-}
-
-function renderAll() {
-  renderKPIs();
-  renderCharts();
-  renderTable();
-}
-
-function renderKPIs() {
-  const total = filteredData.reduce((s, r) => s + (r.amount || 0), 0);
-  const fs = filteredData.filter(r => r.lob === 'FollowSpy');
-  const rf = filteredData.filter(r => r.lob === 'RecentFollow');
-  const fsTotal = fs.reduce((s, r) => s + (r.amount || 0), 0);
-  const rfTotal = rf.reduce((s, r) => s + (r.amount || 0), 0);
-  const avg = filteredData.length ? total / filteredData.filter(r => r.amount > 0).length : 0;
-
-  document.getElementById('kpi-count').textContent = filteredData.length;
-  document.getElementById('kpi-total').textContent = fmtTotal(total);
-  document.getElementById('kpi-fs').textContent = fs.length;
-  document.getElementById('kpi-fs-amt').textContent = fmtTotal(fsTotal);
-  document.getElementById('kpi-rf').textContent = rf.length;
-  document.getElementById('kpi-rf-amt').textContent = fmtTotal(rfTotal);
-  document.getElementById('kpi-avg').textContent = fmtTotal(avg);
-  document.getElementById('result-count').textContent = filteredData.length + ' records';
-}
-
-function count(data, key) {
+function count(arr, key) {
   const m = {};
-  data.forEach(r => { m[r[key]] = (m[r[key]] || 0) + 1; });
-  return m;
-}
-function sumBy(data, key) {
-  const m = {};
-  data.forEach(r => { m[r[key]] = (m[r[key]] || 0) + (r.amount || 0); });
+  arr.forEach(r => { const v = r[key]||'—'; m[v] = (m[v]||0)+1; });
   return m;
 }
 
-const COLORS = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#ec4899','#84cc16','#6366f1','#14b8a6','#a855f7'];
+function topN(obj, n) {
+  return Object.entries(obj).sort((a,b)=>b[1]-a[1]).slice(0,n);
+}
 
-function mkChart(id, type, labels, datasets, opts = {}) {
+const COLORS = ['#60a5fa','#34d399','#a78bfa','#fb923c','#f472b6','#facc15','#818cf8','#2dd4bf','#f87171','#c084fc'];
+
+function buildChart(id, type, labels, values, opts={}) {
   const ctx = document.getElementById(id).getContext('2d');
-  return new Chart(ctx, {
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart(ctx, {
     type,
-    data: { labels, datasets },
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: type==='doughnut' ? COLORS : COLORS[0],
+        borderColor: type==='line' ? '#60a5fa' : 'transparent',
+        borderWidth: type==='line' ? 2 : 0,
+        fill: type==='line',
+        tension: 0.4,
+        pointRadius: 3,
+      }]
+    },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: {
-        legend: { display: opts.legend ?? true, position: 'right', labels: { font: { size: 11 }, boxWidth: 12, padding: 8 } },
-        tooltip: { callbacks: { label: (c) => opts.money ? ' $' + c.raw.toFixed(2) : ' ' + c.raw } }
+        legend: { display: type==='doughnut', position:'right', labels:{color:'#94a3b8',boxWidth:10,font:{size:10}} },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.y ?? ctx.parsed} cases` } }
       },
-      scales: opts.scales || {},
-      ...opts.chartOpts
+      scales: type!=='doughnut' ? {
+        x: { ticks:{color:'#64748b',font:{size:10}}, grid:{color:'#1e293b'} },
+        y: { ticks:{color:'#64748b',font:{size:10}}, grid:{color:'#334155'}, beginAtZero:true }
+      } : {},
+      ...opts
     }
   });
 }
 
-function renderCharts() {
-  const reasonCounts = count(filteredData, 'reason');
-  const resoCounts = count(filteredData, 'reso');
-  const paymentCounts = count(filteredData, 'payment');
-
-  // Daily sum
-  const dailyMap = sumBy(filteredData, 'date');
-  const dailyDates = Object.keys(dailyMap).sort();
-  const dailyVals = dailyDates.map(d => dailyMap[d]);
-
-  if (chartReason) chartReason.destroy();
-  if (chartReso) chartReso.destroy();
-  if (chartPayment) chartPayment.destroy();
-  if (chartDaily) chartDaily.destroy();
-
-  // Reason chart
-  const rLabels = Object.keys(reasonCounts).sort((a,b) => reasonCounts[b] - reasonCounts[a]);
-  chartReason = mkChart('chart-reason', 'bar',
-    rLabels.map(l => l.length > 28 ? l.substring(0, 28) + '…' : l),
-    [{ data: rLabels.map(l => reasonCounts[l]), backgroundColor: COLORS, borderRadius: 4 }],
-    { legend: false, scales: { x: { ticks: { font: { size: 10 } } }, y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
-  );
-
-  // Resolution chart
-  chartReso = mkChart('chart-reso', 'doughnut',
-    Object.keys(resoCounts),
-    [{ data: Object.values(resoCounts), backgroundColor: COLORS, hoverOffset: 6 }],
-    { legend: true }
-  );
-
-  // Payment chart
-  chartPayment = mkChart('chart-payment', 'bar',
-    Object.keys(paymentCounts).sort((a,b) => paymentCounts[b] - paymentCounts[a]),
-    [{ data: Object.keys(paymentCounts).sort((a,b) => paymentCounts[b] - paymentCounts[a]).map(k => paymentCounts[k]), backgroundColor: COLORS, borderRadius: 4 }],
-    { legend: false, scales: { x: { ticks: { font: { size: 11 } } }, y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
-  );
-
-  // Daily chart
-  chartDaily = mkChart('chart-daily', 'line',
-    dailyDates.map(d => d.substring(5)), // show MM-DD
-    [{ data: dailyVals, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.08)', tension: 0.3, fill: true, pointRadius: 4, pointBackgroundColor: '#3b82f6' }],
-    { legend: false, money: true, scales: { x: { ticks: { font: { size: 10 } } }, y: { beginAtZero: true } } }
-  );
+function resoBadge(v) {
+  const vl = v.toLowerCase();
+  if (vl.includes('refund')) return `<span class="badge badge-refunded">${v}</span>`;
+  if (vl.includes('cancel')) return `<span class="badge badge-canceled">${v}</span>`;
+  if (vl.includes('escalat')) return `<span class="badge badge-escalated">${v}</span>`;
+  if (vl === 'n/a' || !v) return `<span class="badge badge-na">N/A</span>`;
+  if (vl.includes('terminat')) return `<span class="badge badge-terminated">${v}</span>`;
+  return `<span class="badge badge-other">${v}</span>`;
 }
 
-function resoBadge(reso) {
-  if (!reso) return '<span class="badge badge-refunded">—</span>';
-  if (reso === 'Refunded') return `<span class="badge badge-refunded">${reso}</span>`;
-  if (reso.includes('Difference')) return `<span class="badge badge-diff">${reso}</span>`;
-  if (reso.includes('Prorated')) return `<span class="badge badge-prorated">${reso}</span>`;
-  if (reso.includes('50%')) return `<span class="badge badge-50">${reso}</span>`;
-  return `<span class="badge badge-refunded">${reso}</span>`;
+function render() {
+  const filtered = getFiltered();
+  const sorted = [...filtered].sort((a,b) => {
+    const av = a[sortCol]||'', bv = b[sortCol]||'';
+    return av < bv ? -sortDir : av > bv ? sortDir : 0;
+  });
+
+  // KPIs
+  document.getElementById('kTotal').textContent = filtered.length;
+  document.getElementById('kSub').textContent = filtered.length === DATA.length ? 'all records' : `of ${DATA.length} total`;
+  const refunded = filtered.filter(r => r.reso.toLowerCase().includes('refund'));
+  document.getElementById('kRefunded').textContent = refunded.length;
+  document.getElementById('kRefundedAmt').textContent = '$'+refunded.reduce((s,r)=>s+r.amount,0).toFixed(2)+' est.';
+  const fs = filtered.filter(r=>r.lob==='FollowSpy');
+  const rf = filtered.filter(r=>r.lob==='RecentFollow');
+  document.getElementById('kFS').textContent = fs.length;
+  document.getElementById('kFSSub').textContent = '$'+fs.reduce((s,r)=>s+r.amount,0).toFixed(2)+' est.';
+  document.getElementById('kRF').textContent = rf.length;
+  document.getElementById('kRFSub').textContent = '$'+rf.reduce((s,r)=>s+r.amount,0).toFixed(2)+' est.';
+  document.getElementById('kCanceled').textContent = filtered.filter(r=>r.reso.toLowerCase().includes('cancel')).length;
+  document.getElementById('kEscalated').textContent = filtered.filter(r=>r.reso.toLowerCase().includes('escalat')).length;
+  document.getElementById('count').textContent = filtered.length + ' records shown';
+
+  // Charts
+  const reasonMap = count(filtered, 'reason');
+  const topReasons = topN(reasonMap, 8);
+  buildChart('chartReason','bar', topReasons.map(e=>e[0]), topReasons.map(e=>e[1]));
+
+  const resoMap = count(filtered, 'reso');
+  const topReso = topN(resoMap, 10);
+  buildChart('chartReso','doughnut', topReso.map(e=>e[0]), topReso.map(e=>e[1]));
+
+  const payMap = count(filtered, 'payment');
+  const topPay = topN(payMap, 8);
+  buildChart('chartPayment','bar', topPay.map(e=>e[0]), topPay.map(e=>e[1]));
+
+  const dateMap = {};
+  filtered.forEach(r => { if(r.date) dateMap[r.date] = (dateMap[r.date]||0)+1; });
+  const dates = Object.keys(dateMap).sort();
+  buildChart('chartDaily','line', dates.map(d=>d.slice(5)), dates.map(d=>dateMap[d]));
+
+  // Table
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = sorted.map(r => `<tr>
+    <td>${r.rawDate}</td>
+    <td>${r.lob==='FollowSpy'?`<span class="lob-fs">FollowSpy</span>`:`<span class="lob-rf">RecentFollow</span>`}</td>
+    <td title="${r.email}">${r.email}</td>
+    <td>${r.plan}</td>
+    <td>${r.reason}</td>
+    <td>${r.payment}</td>
+    <td>${resoBadge(r.reso)}</td>
+    <td>${r.rep}</td>
+    <td title="${r.notes}">${r.notes.slice(0,60)}${r.notes.length>60?'…':''}</td>
+  </tr>`).join('');
+  document.getElementById('tableCount').textContent = `(${sorted.length})`;
 }
 
-function lobBadge(lob) {
-  if (lob === 'FollowSpy') return `<span class="badge badge-fs">FS</span>`;
-  return `<span class="badge badge-rf">RF</span>`;
+function sortBy(col) {
+  if (sortCol === col) sortDir *= -1; else { sortCol = col; sortDir = 1; }
+  render();
 }
 
-function renderTable() {
-  const tbody = document.getElementById('table-body');
-  if (!filteredData.length) {
-    tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;color:#9ca3af;padding:32px">No records found</td></tr>';
-    return;
+function populateFilters() {
+  const selectors = {filterReso:'reso',filterReason:'reason',filterPayment:'payment',filterRep:'rep'};
+  for (const [id, key] of Object.entries(selectors)) {
+    const vals = [...new Set(DATA.map(r=>r[key]).filter(Boolean))].sort();
+    const sel = document.getElementById(id);
+    vals.forEach(v => { const o=document.createElement('option'); o.value=o.textContent=v; sel.appendChild(o); });
   }
-  tbody.innerHTML = filteredData.map(r => `
-    <tr>
-      <td>${r.date.substring(5)}</td>
-      <td style="color:#9ca3af">${r.created ? r.created.substring(5) : '—'}</td>
-      <td>${lobBadge(r.lob)}</td>
-      <td style="font-size:0.75rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.email}">${r.email}</td>
-      <td style="white-space:nowrap;font-size:0.75rem">${r.plan}</td>
-      <td style="font-size:0.75rem;max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${r.reason}">${r.reason}</td>
-      <td style="font-size:0.75rem">${r.gateway}</td>
-      <td style="font-size:0.75rem">${r.payment}</td>
-      <td class="amount">${r.amount ? fmt(r.amount) : '—'}</td>
-      <td>${resoBadge(r.reso)}</td>
-      <td style="font-weight:600;color:#374151">${r.agent}</td>
-      <td class="notes-cell" title="${r.notes}">${r.notes}</td>
-    </tr>
-  `).join('');
+  // Set default date range
+  const dates = DATA.map(r=>r.date).filter(Boolean).sort();
+  if (dates.length) {
+    document.getElementById('dateFrom').value = dates[0];
+    document.getElementById('dateTo').value = dates[dates.length-1];
+  }
 }
 
-// Init
-initFilters();
-filteredData = [...RAW_DATA];
-sortData();
-renderAll();
+function resetFilters() {
+  document.getElementById('filterLob').value='';
+  document.getElementById('filterReso').value='';
+  document.getElementById('filterReason').value='';
+  document.getElementById('filterPayment').value='';
+  document.getElementById('filterRep').value='';
+  const dates = DATA.map(r=>r.date).filter(Boolean).sort();
+  if (dates.length) {
+    document.getElementById('dateFrom').value = dates[0];
+    document.getElementById('dateTo').value = dates[dates.length-1];
+  }
+  render();
+}
+
+['dateFrom','dateTo','filterLob','filterReso','filterReason','filterPayment','filterRep'].forEach(id => {
+  document.getElementById(id).addEventListener('change', render);
+});
+
+populateFilters();
+render();
 </script>
 </body>
 </html>

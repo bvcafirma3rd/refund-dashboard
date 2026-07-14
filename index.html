@@ -1,4 +1,134 @@
-<script>const DATA = [
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RF/FS Refund Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh}
+  header{background:linear-gradient(135deg,#1e293b,#0f172a);padding:20px 28px;border-bottom:1px solid #334155;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+  header h1{font-size:1.4rem;font-weight:700;color:#f1f5f9;letter-spacing:-.3px}
+  header h1 span{color:#60a5fa}
+  .updated{font-size:.75rem;color:#64748b;margin-top:2px}
+  .filters{background:#1e293b;padding:16px 28px;border-bottom:1px solid #334155;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+  .filter-group{display:flex;flex-direction:column;gap:4px}
+  .filter-group label{font-size:.7rem;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+  .filter-group input,.filter-group select{background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:6px 10px;border-radius:6px;font-size:.8rem;outline:none;min-width:120px}
+  .filter-group input:focus,.filter-group select:focus{border-color:#60a5fa}
+  .filter-group input[type=date]{min-width:130px}
+  .btn-reset{background:#334155;color:#94a3b8;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:.8rem;height:32px;align-self:flex-end}
+  .btn-reset:hover{background:#475569;color:#e2e8f0}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;padding:20px 28px}
+  .kpi{background:#1e293b;border:1px solid #334155;border-radius:10px;padding:16px 18px}
+  .kpi .label{font-size:.7rem;color:#64748b;text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px}
+  .kpi .value{font-size:1.7rem;font-weight:700;color:#f1f5f9;line-height:1}
+  .kpi .sub{font-size:.72rem;color:#64748b;margin-top:4px}
+  .kpi.blue .value{color:#60a5fa}
+  .kpi.green .value{color:#34d399}
+  .kpi.purple .value{color:#a78bfa}
+  .kpi.orange .value{color:#fb923c}
+  .charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;padding:0 28px 20px}
+  .chart-card{background:#1e293b;border:1px solid #334155;border-radius:10px;padding:18px}
+  .chart-card h3{font-size:.8rem;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:14px}
+  .chart-wrap{position:relative;height:200px}
+  .table-section{padding:0 28px 28px}
+  .table-section h3{font-size:.8rem;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:12px}
+  .table-wrap{overflow-x:auto;border:1px solid #334155;border-radius:10px}
+  table{width:100%;border-collapse:collapse;font-size:.78rem}
+  th{background:#1e293b;color:#64748b;font-weight:600;padding:10px 12px;text-align:left;white-space:nowrap;border-bottom:1px solid #334155;position:sticky;top:0;cursor:pointer;user-select:none}
+  th:hover{color:#94a3b8}
+  td{padding:9px 12px;border-bottom:1px solid #1e293b;color:#cbd5e1;white-space:nowrap;max-width:240px;overflow:hidden;text-overflow:ellipsis}
+  tr:hover td{background:#1e293b}
+  tr:last-child td{border-bottom:none}
+  .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.68rem;font-weight:600;white-space:nowrap}
+  .badge-refunded{background:#064e3b;color:#34d399}
+  .badge-canceled{background:#1e1b4b;color:#818cf8}
+  .badge-escalated{background:#431407;color:#fb923c}
+  .badge-na{background:#1e293b;color:#64748b}
+  .badge-terminated{background:#1c1917;color:#a8a29e}
+  .badge-other{background:#172554;color:#93c5fd}
+  .lob-fs{background:#1e1b4b;color:#a78bfa;border-radius:20px;padding:2px 8px;font-size:.68rem;font-weight:600}
+  .lob-rf{background:#052e16;color:#4ade80;border-radius:20px;padding:2px 8px;font-size:.68rem;font-weight:600}
+  #count{color:#60a5fa;font-size:.78rem}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>RF/FS <span>Refund Dashboard</span></h1>
+    <div class="updated">PathSocial · RF/FS REFUND TRACKER</div>
+  </div>
+  <div id="count"></div>
+</header>
+<div class="filters">
+  <div class="filter-group">
+    <label>Date From</label>
+    <input type="date" id="dateFrom">
+  </div>
+  <div class="filter-group">
+    <label>Date To</label>
+    <input type="date" id="dateTo">
+  </div>
+  <div class="filter-group">
+    <label>LOB</label>
+    <select id="filterLob"><option value="">All</option><option>FollowSpy</option><option>RecentFollow</option></select>
+  </div>
+  <div class="filter-group">
+    <label>Resolution</label>
+    <select id="filterReso"><option value="">All</option></select>
+  </div>
+  <div class="filter-group">
+    <label>Reason</label>
+    <select id="filterReason"><option value="">All</option></select>
+  </div>
+  <div class="filter-group">
+    <label>Payment</label>
+    <select id="filterPayment"><option value="">All</option></select>
+  </div>
+  <div class="filter-group">
+    <label>Rep</label>
+    <select id="filterRep"><option value="">All</option></select>
+  </div>
+  <button class="btn-reset" onclick="resetFilters()">Reset</button>
+</div>
+<div class="kpis">
+  <div class="kpi blue"><div class="label">Total Cases</div><div class="value" id="kTotal">—</div><div class="sub" id="kSub">filtered</div></div>
+  <div class="kpi green"><div class="label">Refunded Cases</div><div class="value" id="kRefunded">—</div><div class="sub" id="kRefundedAmt"></div></div>
+  <div class="kpi purple"><div class="label">FollowSpy</div><div class="value" id="kFS">—</div><div class="sub" id="kFSSub"></div></div>
+  <div class="kpi orange"><div class="label">RecentFollow</div><div class="value" id="kRF">—</div><div class="sub" id="kRFSub"></div></div>
+  <div class="kpi"><div class="label">Canceled</div><div class="value" id="kCanceled">—</div><div class="sub">resolved</div></div>
+  <div class="kpi"><div class="label">Escalated</div><div class="value" id="kEscalated">—</div><div class="sub">cases</div></div>
+</div>
+<div class="charts">
+  <div class="chart-card"><h3>Reason / Issue</h3><div class="chart-wrap"><canvas id="chartReason"></canvas></div></div>
+  <div class="chart-card"><h3>Resolution</h3><div class="chart-wrap"><canvas id="chartReso"></canvas></div></div>
+  <div class="chart-card"><h3>Payment Method</h3><div class="chart-wrap"><canvas id="chartPayment"></canvas></div></div>
+  <div class="chart-card"><h3>Daily Volume</h3><div class="chart-wrap"><canvas id="chartDaily"></canvas></div></div>
+</div>
+<div class="table-section">
+  <h3>Records <span id="tableCount"></span></h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th onclick="sortBy('date')">Date ↕</th>
+        <th onclick="sortBy('lob')">LOB ↕</th>
+        <th onclick="sortBy('email')">Email ↕</th>
+        <th onclick="sortBy('plan')">Plan ↕</th>
+        <th onclick="sortBy('reason')">Reason ↕</th>
+        <th onclick="sortBy('payment')">Payment ↕</th>
+        <th onclick="sortBy('reso')">Resolution ↕</th>
+        <th onclick="sortBy('rep')">Rep ↕</th>
+        <th>Notes</th>
+      </tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const DATA = [
   {date:"2026-05-01",rawDate:"5/1/2026",created:"2/24/2026",lob:"RecentFollow",email:"slamnsnacks@gmail.com",plan:"Expert Quarterly",status:"Refunded",reason:"Accidental upgrade quarterly",payment:"Paypal",notes:"Rejected save offer, dispute threat",reso:"Refunded",rep:"Ben",month:"05-2026",amount:72.01},
   {date:"2026-05-01",rawDate:"5/1/2026",created:"5/1/2026",lob:"RecentFollow",email:"caidence.crane2@yahoo.com",plan:"Expert Quarterly",status:"Refunded",reason:"Accidental reg quarterly",payment:"VISA",notes:"Rejected save offer",reso:"Refunded",rep:"Geal",month:"05-2026",amount:80.0},
   {date:"2026-05-01",rawDate:"5/1/2026",created:"5/1/2026",lob:"RecentFollow",email:"jaiden1g9002@gmail.com",plan:"Expert Weekly",status:"Refunded",reason:"Duplicate",payment:"VISA",notes:"Cx signed up email with typo issue, duplicate act",reso:"Refunded",rep:"Jessica",month:"05-2026",amount:8.0},
@@ -126,4 +256,182 @@
   {date:"2026-07-10",rawDate:"07/10/2026",created:"11/09/2025",lob:"RecentFollow",email:"bleujimiprojects@gmail.com",plan:"Expert Weekly",status:"Refunded",reason:"Duplicate",payment:"MC",notes:"cx wants duplicate charge to be refunded and cancled",reso:"Refunded",rep:"Roy",month:"07-2026",amount:8.0},
   {date:"2026-07-10",rawDate:"07/10/2026",created:"07/02/2026",lob:"RecentFollow",email:"arionnaalgarin@gmail.com",plan:"Expert Weekly",status:"Refunded",reason:"Dispute threat",payment:"ApplePay",notes:"-most recent charge has been refunded - airwallex",reso:"Refunded",rep:"Geal",month:"07-2026",amount:11.0},
   {date:"2026-07-13",rawDate:"07/13/2026",created:"7/7/2026",lob:"RecentFollow",email:"bdavis480002@gmail.com",plan:"Expert Quarterly",status:"Refunded",reason:"Dashboard/System Issue",payment:"ApplePay",notes:"cx was complaining about the technical error and is asking for refund. Cx was offered term with 50% partial refund and cx accepted. Term and partially refunded",reso:"Prorated Refund",rep:"Geal",month:"07-2026",amount:45.0}
-];</script>
+];
+
+let charts = {};
+let sortCol = 'date', sortDir = 1;
+
+function getFiltered() {
+  const from = document.getElementById('dateFrom').value;
+  const to = document.getElementById('dateTo').value;
+  const lob = document.getElementById('filterLob').value;
+  const reso = document.getElementById('filterReso').value;
+  const reason = document.getElementById('filterReason').value;
+  const payment = document.getElementById('filterPayment').value;
+  const rep = document.getElementById('filterRep').value;
+  return DATA.filter(r => {
+    if (from && r.date < from) return false;
+    if (to && r.date > to) return false;
+    if (lob && r.lob !== lob) return false;
+    if (reso && r.reso !== reso) return false;
+    if (reason && r.reason !== reason) return false;
+    if (payment && r.payment !== payment) return false;
+    if (rep && r.rep !== rep) return false;
+    return true;
+  });
+}
+
+function count(arr, key) {
+  const m = {};
+  arr.forEach(r => { const v = r[key]||'—'; m[v] = (m[v]||0)+1; });
+  return m;
+}
+
+function topN(obj, n) {
+  return Object.entries(obj).sort((a,b)=>b[1]-a[1]).slice(0,n);
+}
+
+const COLORS = ['#60a5fa','#34d399','#a78bfa','#fb923c','#f472b6','#facc15','#818cf8','#2dd4bf','#f87171','#c084fc'];
+
+function buildChart(id, type, labels, values, opts={}) {
+  const ctx = document.getElementById(id).getContext('2d');
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart(ctx, {
+    type,
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: type==='doughnut' ? COLORS : COLORS[0],
+        borderColor: type==='line' ? '#60a5fa' : 'transparent',
+        borderWidth: type==='line' ? 2 : 0,
+        fill: type==='line',
+        tension: 0.4,
+        pointRadius: 3,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: type==='doughnut', position:'right', labels:{color:'#94a3b8',boxWidth:10,font:{size:10}} },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.y ?? ctx.parsed} cases` } }
+      },
+      scales: type!=='doughnut' ? {
+        x: { ticks:{color:'#64748b',font:{size:10}}, grid:{color:'#1e293b'} },
+        y: { ticks:{color:'#64748b',font:{size:10}}, grid:{color:'#334155'}, beginAtZero:true }
+      } : {},
+      ...opts
+    }
+  });
+}
+
+function resoBadge(v) {
+  const vl = v.toLowerCase();
+  if (vl.includes('refund')) return `<span class="badge badge-refunded">${v}</span>`;
+  if (vl.includes('cancel')) return `<span class="badge badge-canceled">${v}</span>`;
+  if (vl.includes('escalat')) return `<span class="badge badge-escalated">${v}</span>`;
+  if (vl === 'n/a' || !v) return `<span class="badge badge-na">N/A</span>`;
+  if (vl.includes('terminat')) return `<span class="badge badge-terminated">${v}</span>`;
+  return `<span class="badge badge-other">${v}</span>`;
+}
+
+function render() {
+  const filtered = getFiltered();
+  const sorted = [...filtered].sort((a,b) => {
+    const av = a[sortCol]||'', bv = b[sortCol]||'';
+    return av < bv ? -sortDir : av > bv ? sortDir : 0;
+  });
+
+  // KPIs
+  document.getElementById('kTotal').textContent = filtered.length;
+  document.getElementById('kSub').textContent = filtered.length === DATA.length ? 'all records' : `of ${DATA.length} total`;
+  const refunded = filtered.filter(r => r.reso.toLowerCase().includes('refund'));
+  document.getElementById('kRefunded').textContent = refunded.length;
+  document.getElementById('kRefundedAmt').textContent = '$'+refunded.reduce((s,r)=>s+r.amount,0).toFixed(2)+' est.';
+  const fs = filtered.filter(r=>r.lob==='FollowSpy');
+  const rf = filtered.filter(r=>r.lob==='RecentFollow');
+  document.getElementById('kFS').textContent = fs.length;
+  document.getElementById('kFSSub').textContent = '$'+fs.reduce((s,r)=>s+r.amount,0).toFixed(2)+' est.';
+  document.getElementById('kRF').textContent = rf.length;
+  document.getElementById('kRFSub').textContent = '$'+rf.reduce((s,r)=>s+r.amount,0).toFixed(2)+' est.';
+  document.getElementById('kCanceled').textContent = filtered.filter(r=>r.reso.toLowerCase().includes('cancel')).length;
+  document.getElementById('kEscalated').textContent = filtered.filter(r=>r.reso.toLowerCase().includes('escalat')).length;
+  document.getElementById('count').textContent = filtered.length + ' records shown';
+
+  // Charts
+  const reasonMap = count(filtered, 'reason');
+  const topReasons = topN(reasonMap, 8);
+  buildChart('chartReason','bar', topReasons.map(e=>e[0]), topReasons.map(e=>e[1]));
+
+  const resoMap = count(filtered, 'reso');
+  const topReso = topN(resoMap, 10);
+  buildChart('chartReso','doughnut', topReso.map(e=>e[0]), topReso.map(e=>e[1]));
+
+  const payMap = count(filtered, 'payment');
+  const topPay = topN(payMap, 8);
+  buildChart('chartPayment','bar', topPay.map(e=>e[0]), topPay.map(e=>e[1]));
+
+  const dateMap = {};
+  filtered.forEach(r => { if(r.date) dateMap[r.date] = (dateMap[r.date]||0)+1; });
+  const dates = Object.keys(dateMap).sort();
+  buildChart('chartDaily','line', dates.map(d=>d.slice(5)), dates.map(d=>dateMap[d]));
+
+  // Table
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = sorted.map(r => `<tr>
+    <td>${r.rawDate}</td>
+    <td>${r.lob==='FollowSpy'?`<span class="lob-fs">FollowSpy</span>`:`<span class="lob-rf">RecentFollow</span>`}</td>
+    <td title="${r.email}">${r.email}</td>
+    <td>${r.plan}</td>
+    <td>${r.reason}</td>
+    <td>${r.payment}</td>
+    <td>${resoBadge(r.reso)}</td>
+    <td>${r.rep}</td>
+    <td title="${r.notes}">${r.notes.slice(0,60)}${r.notes.length>60?'…':''}</td>
+  </tr>`).join('');
+  document.getElementById('tableCount').textContent = `(${sorted.length})`;
+}
+
+function sortBy(col) {
+  if (sortCol === col) sortDir *= -1; else { sortCol = col; sortDir = 1; }
+  render();
+}
+
+function populateFilters() {
+  const selectors = {filterReso:'reso',filterReason:'reason',filterPayment:'payment',filterRep:'rep'};
+  for (const [id, key] of Object.entries(selectors)) {
+    const vals = [...new Set(DATA.map(r=>r[key]).filter(Boolean))].sort();
+    const sel = document.getElementById(id);
+    vals.forEach(v => { const o=document.createElement('option'); o.value=o.textContent=v; sel.appendChild(o); });
+  }
+  // Set default date range
+  const dates = DATA.map(r=>r.date).filter(Boolean).sort();
+  if (dates.length) {
+    document.getElementById('dateFrom').value = dates[0];
+    document.getElementById('dateTo').value = dates[dates.length-1];
+  }
+}
+
+function resetFilters() {
+  document.getElementById('filterLob').value='';
+  document.getElementById('filterReso').value='';
+  document.getElementById('filterReason').value='';
+  document.getElementById('filterPayment').value='';
+  document.getElementById('filterRep').value='';
+  const dates = DATA.map(r=>r.date).filter(Boolean).sort();
+  if (dates.length) {
+    document.getElementById('dateFrom').value = dates[0];
+    document.getElementById('dateTo').value = dates[dates.length-1];
+  }
+  render();
+}
+
+['dateFrom','dateTo','filterLob','filterReso','filterReason','filterPayment','filterRep'].forEach(id => {
+  document.getElementById(id).addEventListener('change', render);
+});
+
+populateFilters();
+render();
+</script>
+</body>
+</html>

@@ -1,134 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RF/FS Refund Dashboard</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh}
-  header{background:linear-gradient(135deg,#1e293b,#0f172a);padding:20px 28px;border-bottom:1px solid #334155;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
-  header h1{font-size:1.4rem;font-weight:700;color:#f1f5f9;letter-spacing:-.3px}
-  header h1 span{color:#60a5fa}
-  .updated{font-size:.75rem;color:#64748b;margin-top:2px}
-  .filters{background:#1e293b;padding:16px 28px;border-bottom:1px solid #334155;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
-  .filter-group{display:flex;flex-direction:column;gap:4px}
-  .filter-group label{font-size:.7rem;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
-  .filter-group input,.filter-group select{background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:6px 10px;border-radius:6px;font-size:.8rem;outline:none;min-width:120px}
-  .filter-group input:focus,.filter-group select:focus{border-color:#60a5fa}
-  .filter-group input[type=date]{min-width:130px}
-  .btn-reset{background:#334155;color:#94a3b8;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:.8rem;height:32px;align-self:flex-end}
-  .btn-reset:hover{background:#475569;color:#e2e8f0}
-  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;padding:20px 28px}
-  .kpi{background:#1e293b;border:1px solid #334155;border-radius:10px;padding:16px 18px}
-  .kpi .label{font-size:.7rem;color:#64748b;text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px}
-  .kpi .value{font-size:1.7rem;font-weight:700;color:#f1f5f9;line-height:1}
-  .kpi .sub{font-size:.72rem;color:#64748b;margin-top:4px}
-  .kpi.blue .value{color:#60a5fa}
-  .kpi.green .value{color:#34d399}
-  .kpi.purple .value{color:#a78bfa}
-  .kpi.orange .value{color:#fb923c}
-  .charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;padding:0 28px 20px}
-  .chart-card{background:#1e293b;border:1px solid #334155;border-radius:10px;padding:18px}
-  .chart-card h3{font-size:.8rem;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:14px}
-  .chart-wrap{position:relative;height:200px}
-  .table-section{padding:0 28px 28px}
-  .table-section h3{font-size:.8rem;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:12px}
-  .table-wrap{overflow-x:auto;border:1px solid #334155;border-radius:10px}
-  table{width:100%;border-collapse:collapse;font-size:.78rem}
-  th{background:#1e293b;color:#64748b;font-weight:600;padding:10px 12px;text-align:left;white-space:nowrap;border-bottom:1px solid #334155;position:sticky;top:0;cursor:pointer;user-select:none}
-  th:hover{color:#94a3b8}
-  td{padding:9px 12px;border-bottom:1px solid #1e293b;color:#cbd5e1;white-space:nowrap;max-width:240px;overflow:hidden;text-overflow:ellipsis}
-  tr:hover td{background:#1e293b}
-  tr:last-child td{border-bottom:none}
-  .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.68rem;font-weight:600;white-space:nowrap}
-  .badge-refunded{background:#064e3b;color:#34d399}
-  .badge-canceled{background:#1e1b4b;color:#818cf8}
-  .badge-escalated{background:#431407;color:#fb923c}
-  .badge-na{background:#1e293b;color:#64748b}
-  .badge-terminated{background:#1c1917;color:#a8a29e}
-  .badge-other{background:#172554;color:#93c5fd}
-  .lob-fs{background:#1e1b4b;color:#a78bfa;border-radius:20px;padding:2px 8px;font-size:.68rem;font-weight:600}
-  .lob-rf{background:#052e16;color:#4ade80;border-radius:20px;padding:2px 8px;font-size:.68rem;font-weight:600}
-  #count{color:#60a5fa;font-size:.78rem}
-</style>
-</head>
-<body>
-<header>
-  <div>
-    <h1>RF/FS <span>Refund Dashboard</span></h1>
-    <div class="updated">PathSocial · RF/FS REFUND TRACKER</div>
-  </div>
-  <div id="count"></div>
-</header>
-<div class="filters">
-  <div class="filter-group">
-    <label>Date From</label>
-    <input type="date" id="dateFrom">
-  </div>
-  <div class="filter-group">
-    <label>Date To</label>
-    <input type="date" id="dateTo">
-  </div>
-  <div class="filter-group">
-    <label>LOB</label>
-    <select id="filterLob"><option value="">All</option><option>FollowSpy</option><option>RecentFollow</option></select>
-  </div>
-  <div class="filter-group">
-    <label>Resolution</label>
-    <select id="filterReso"><option value="">All</option></select>
-  </div>
-  <div class="filter-group">
-    <label>Reason</label>
-    <select id="filterReason"><option value="">All</option></select>
-  </div>
-  <div class="filter-group">
-    <label>Payment</label>
-    <select id="filterPayment"><option value="">All</option></select>
-  </div>
-  <div class="filter-group">
-    <label>Rep</label>
-    <select id="filterRep"><option value="">All</option></select>
-  </div>
-  <button class="btn-reset" onclick="resetFilters()">Reset</button>
-</div>
-<div class="kpis">
-  <div class="kpi blue"><div class="label">Total Cases</div><div class="value" id="kTotal">—</div><div class="sub" id="kSub">filtered</div></div>
-  <div class="kpi green"><div class="label">Refunded Cases</div><div class="value" id="kRefunded">—</div><div class="sub" id="kRefundedAmt"></div></div>
-  <div class="kpi purple"><div class="label">FollowSpy</div><div class="value" id="kFS">—</div><div class="sub" id="kFSSub"></div></div>
-  <div class="kpi orange"><div class="label">RecentFollow</div><div class="value" id="kRF">—</div><div class="sub" id="kRFSub"></div></div>
-  <div class="kpi"><div class="label">Canceled</div><div class="value" id="kCanceled">—</div><div class="sub">resolved</div></div>
-  <div class="kpi"><div class="label">Escalated</div><div class="value" id="kEscalated">—</div><div class="sub">cases</div></div>
-</div>
-<div class="charts">
-  <div class="chart-card"><h3>Reason / Issue</h3><div class="chart-wrap"><canvas id="chartReason"></canvas></div></div>
-  <div class="chart-card"><h3>Resolution</h3><div class="chart-wrap"><canvas id="chartReso"></canvas></div></div>
-  <div class="chart-card"><h3>Payment Method</h3><div class="chart-wrap"><canvas id="chartPayment"></canvas></div></div>
-  <div class="chart-card"><h3>Daily Volume</h3><div class="chart-wrap"><canvas id="chartDaily"></canvas></div></div>
-</div>
-<div class="table-section">
-  <h3>Records <span id="tableCount"></span></h3>
-  <div class="table-wrap">
-    <table>
-      <thead><tr>
-        <th onclick="sortBy('date')">Date ↕</th>
-        <th onclick="sortBy('lob')">LOB ↕</th>
-        <th onclick="sortBy('email')">Email ↕</th>
-        <th onclick="sortBy('plan')">Plan ↕</th>
-        <th onclick="sortBy('reason')">Reason ↕</th>
-        <th onclick="sortBy('payment')">Payment ↕</th>
-        <th onclick="sortBy('reso')">Resolution ↕</th>
-        <th onclick="sortBy('rep')">Rep ↕</th>
-        <th>Notes</th>
-      </tr></thead>
-      <tbody id="tbody"></tbody>
-    </table>
-  </div>
-</div>
-
-<script>
-const DATA = [
+<script>const DATA = [
   {date:"2026-05-01",rawDate:"5/1/2026",created:"2/24/2026",lob:"RecentFollow",email:"slamnsnacks@gmail.com",plan:"Expert Quarterly",status:"Refunded",reason:"Accidental upgrade quarterly",payment:"Paypal",notes:"Rejected save offer, dispute threat",reso:"Refunded",rep:"Ben",month:"05-2026",amount:72.01},
   {date:"2026-05-01",rawDate:"5/1/2026",created:"5/1/2026",lob:"RecentFollow",email:"caidence.crane2@yahoo.com",plan:"Expert Quarterly",status:"Refunded",reason:"Accidental reg quarterly",payment:"VISA",notes:"Rejected save offer",reso:"Refunded",rep:"Geal",month:"05-2026",amount:80.0},
   {date:"2026-05-01",rawDate:"5/1/2026",created:"5/1/2026",lob:"RecentFollow",email:"jaiden1g9002@gmail.com",plan:"Expert Weekly",status:"Refunded",reason:"Duplicate",payment:"VISA",notes:"Cx signed up email with typo issue, duplicate act",reso:"Refunded",rep:"Jessica",month:"05-2026",amount:8.0},
@@ -155,7 +25,7 @@ const DATA = [
   {date:"2026-05-05",rawDate:"5/5/2026",created:"05/05/2026",lob:"FollowSpy",email:"Masteralnajjarq8@gmail.com",plan:"Premium Quarterly",status:"Refunded",reason:"No longer needed",payment:"MC",notes:"accepted full term and refund acct minus 1 week service",reso:"Prorated Refund",rep:"Roy",month:"05-2026",amount:73.0},
   {date:"2026-05-07",rawDate:"5/7/2026",created:"05/06/2026",lob:"FollowSpy",email:"ashleehasss@gmail.com",plan:"Premium Quarterly",status:"Refunded",reason:"Accepted DG to lower quart, refund diff",payment:"VISA",notes:"Accidentally reg quarterly, accepted DG lower quarterly plan and refund diff",reso:"Prorated Refund",rep:"Ben",month:"05-2026",amount:17.78},
   {date:"2026-05-08",rawDate:"5/8/2026",created:"5/5/2026",lob:"RecentFollow",email:"vivianbui9@gmail.com",plan:"Expert Quarterly",status:"Refunded",reason:"Accidental reg quarterly",payment:"VISA",notes:"declined save offers, canceled in DB, cx is already disputing with their bank, term and refunded in db but refund not reflecting in OP. Manually refunded in OP.",reso:"Refunded",rep:"Geal",month:"05-2026",amount:80.0},
-  {date:"2026-05-08",rawDate:"5/8/2026",created:"5/8/2026",lob:"FollowSpy",email:"mickeymatar2@gmail.com",plan:"Premium Quarterly",status:"Refunded",reason:"Accidental reg quarterly",payment:"Paypal",notes:"Cx insisted to have full refund, not aware of the charge on quarterly plan. declined all save offer. PAYPAL account, no acocunt in db",reso:"Refunded",rep:"Geal",month:"05-2026",amount:82.01},
+  {date:"2026-05-08",rawDate:"5/8/2026",created:"5/8/2026",lob:"FollowSpy",email:"mickeymatar2@gmail.com",plan:"Premium Quarterly",status:"Refunded",reason:"Accidental reg quarterly",payment:"Paypal",notes:"\"Cx insisted to have full refund, not aware of the charge on quarterly plan. declined all save offer. PAYPAL account *no acocunt in db*\"",reso:"Refunded",rep:"Geal",month:"05-2026",amount:82.01},
   {date:"2026-05-11",rawDate:"5/11/2026",created:"8/3/2025",lob:"RecentFollow",email:"tristan.henriquez@yahoo.com",plan:"Elite V1 Weekly",status:"Refunded",reason:"Renewal cx unaware",payment:"AMEX",notes:"showing free on their end. cx asked for refund, but we can only process refund on the most recent charge.",reso:"Refunded",rep:"Geal",month:"05-2026",amount:8.0},
   {date:"2026-05-11",rawDate:"5/11/2026",created:"5/3/2026",lob:"FollowSpy",email:"mgialouris7@gmail.com",plan:"Starter Weekly",status:"Refunded",reason:"Dispute threat",payment:"VISA",notes:"Roy asked to process refund as she tried to term and refund in DB, escalated to me for processing for refund in OP",reso:"Refunded",rep:"Geal",month:"05-2026",amount:7.0},
   {date:"2026-05-11",rawDate:"5/11/2026",created:"5/2/2026",lob:"FollowSpy",email:"gapsygirl10@gmail.com",plan:"Premium Quarterly",status:"Refunded",reason:"Dispute threat",payment:"MC",notes:"task, might be an active dispute, account was terminated by dispute team. Processed refund on the price difference.",reso:"Refund Difference",rep:"Geal",month:"05-2026",amount:73.01},
@@ -170,20 +40,20 @@ const DATA = [
   {date:"2026-05-14",rawDate:"5/14/2026",created:"05/13/2026",lob:"FollowSpy",email:"jayeshbaid7@gmail.com",plan:"Starter Quarterly",status:"Refunded",reason:"No longer needed",payment:"VISA",notes:"cx accepted the term and prorated refund offered",reso:"Prorated Refund",rep:"Roy",month:"05-2026",amount:57.0},
   {date:"2026-05-15",rawDate:"5/15/2026",created:"05/13/2026",lob:"FollowSpy",email:"babyfacecayy@gmail.com",plan:"Premium Weekly",status:"Refunded",reason:"Rejected save offer",payment:"VISA",notes:"cx declned all save offers, stil insits of refund",reso:"Refunded",rep:"Roy",month:"05-2026",amount:9.0},
   {date:"2026-05-17",rawDate:"5/17/2026",created:"5/17/2026",lob:"FollowSpy",email:"anonymaerlig8@gmail.com",plan:"Starter Quarterly",status:"Refunded",reason:"Dispute threat",payment:"ApplePay",notes:"cx is not aware of the upgrade, asking for refund. cx accepted the offer to term and have partial refund (1 week of service will be collected) Airwallex",reso:"Prorated Refund",rep:"Geal",month:"05-2026",amount:57.01},
-  {date:"2026-05-17",rawDate:"5/17/2026",created:"5/17/2026",lob:"FollowSpy",email:"vegasmami141820@gmail.com",plan:"Starter Quarterly",status:"Refunded",reason:"Duplicate",payment:"VISA",notes:"cx has duplicate subs, offere retention on quarterly plan, cx accepted to keep the starter weekly plan. term and refunded the Starter Quarterly plan.",reso:"Prorated Refund",rep:"Geal",month:"05-2026",amount:64.0},
+  {date:"2026-05-17",rawDate:"5/17/2026",created:"5/17/2026",lob:"FollowSpy",email:"vegasmami141820@gmail.com",plan:"Starter Quarterly",status:"Refunded",reason:"Duplicate",payment:"VISA",notes:"cx has duplicate subs, offere retention on quarterly plan, cx accepted to keep the starter weekly plan .term and refunded the Starter Quarterly plan.",reso:"Prorated Refund",rep:"Geal",month:"05-2026",amount:64.0},
   {date:"2026-05-18",rawDate:"5/18/2026",created:"12/17/2026",lob:"RecentFollow",email:"romanfloyd01@gmail.com",plan:"Starter Quarterly",status:"Refunded",reason:"Accepted DG to weekly, refund diff",payment:"Paypal",notes:"cx has duplicate subs, offere retention on quarterly plan, cx accepted to keep the starter weekly plan",reso:"Refund Difference",rep:"Roy",month:"05-2026",amount:60.32},
   {date:"2026-05-18",rawDate:"5/18/2026",created:"5/15/2026",lob:"FollowSpy",email:"shtundak18@gmail.com",plan:"Starter Quarterly",status:"Refunded",reason:"Accepted DG to weekly, refund diff",payment:"VISA",notes:"cx has duplicate subs, offere retention on quarterly plan, cx accepted to keep the starter weekly plan",reso:"Refund Difference",rep:"Roy",month:"05-2026",amount:57.88},
-  {date:"2026-05-18",rawDate:"5/18/2026",created:"11/17/2026",lob:"RecentFollow",email:"chanelrs@yahoo.com",plan:"Expert Quarterly",status:"Refunded",reason:"Dispute threat",payment:"VISA",notes:"cx declcined all save offers, wants full refund.",reso:"Refunded",rep:"Roy",month:"05-2026",amount:80.0},
-  {date:"2026-05-18",rawDate:"5/18/2026",created:"05/17/2026",lob:"RecentFollow",email:"jackievazquez96@yahoo.com",plan:"Expert Quarterly",status:"Refunded",reason:"Accidental reg quarterly",payment:"ApplePay",notes:"Accidentally reg quarterly, accepted DG lower quarterly plan and refund diff",reso:"Refunded",rep:"Jessica",month:"05-2026",amount:79.5},
+  {date:"2026-05-18",rawDate:"5/18/2026",created:"11/17/2025",lob:"RecentFollow",email:"chanelrs@yahoo.com",plan:"Expert Quarterly",status:"Refunded",reason:"Dispute threat",payment:"VISA",notes:"cx declcined all save offers, wants full refund.",reso:"Refunded",rep:"Roy",month:"05-2026",amount:80.0},
+  {date:"2026-05-18",rawDate:"5/18/2026",created:"05/17/2026",lob:"RecentFollow",email:"jackievazquez96@yahoo.com",plan:"Expert Quarterly",status:"Refunded",reason:"Accidental reg quarterly",payment:"ApplePay",notes:"Accidentally reg quarterly, accepted DG lower quarterly plan and refund diff",reso:"Refunded",rep:"Jessica",month:"05-2026",amount:0},
   {date:"2026-05-18",rawDate:"5/18/2026",created:"11/24/2025",lob:"RecentFollow",email:"annierc493@gmail.com",plan:"Expert Weekly",status:"Refunded",reason:"Duplicate",payment:"ApplePay",notes:"duplcate charges. 5 active weekly subscription, advised that we can only refund the 5 most recent charges, airwallex, escalated and approved to refund $56. refunded in OP",reso:"Refunded",rep:"Geal",month:"05-2026",amount:56.0},
-  {date:"2026-05-20",rawDate:"5/20/2026",created:"05/01/2026",lob:"FollowSpy",email:"lgillgilgil@gmail.com",plan:"Starter Quarterly",status:"Refunded",reason:"Accepted DG to weekly, refund diff",payment:"VISA",notes:"cx agreed to DG and refund price diff, original card cant be used to charge for the weekly plan charge, AWX- refunded and term and they will reactivate with weekly pan",reso:"Refunded",rep:"Roy",month:"05-2026",amount:64.0},
+  {date:"2026-05-20",rawDate:"5/20/2026",created:"05/01/2026",lob:"FollowSpy",email:"lgillgilgil@gmail.com",plan:"Starter Quarterly",status:"Refunded",reason:"Accepted DG to weekly, refund diff",payment:"VISA",notes:"cx agreed to DG and refund price diff, original card can;t be used to charge for the weekly plan charge, AWX- refunded and term and they will reactivate with errkly pan",reso:"Refunded",rep:"Roy",month:"05-2026",amount:64.0},
   {date:"2026-05-20",rawDate:"5/20/2026",created:"05/12/2026",lob:"FollowSpy",email:"kassadin849@gmail.com",plan:"Starter Quarterly",status:"Refunded",reason:"Accidental reg quarterly",payment:"ApplePay",notes:"acct was already refunded and termed, declined save offer",reso:"Refunded",rep:"Roy",month:"05-2026",amount:63.2},
   {date:"2026-05-20",rawDate:"5/20/2026",created:"05/20/2026",lob:"FollowSpy",email:"zelyn13@gmail.com",plan:"Starter Quarterly",status:"Refunded",reason:"Accidental reg quarterly",payment:"Discover",notes:"cx accepted the term and prorated refund offered",reso:"Prorated Refund",rep:"Roy",month:"05-2026",amount:57.0},
   {date:"2026-05-20",rawDate:"05/20/2026",created:"05/19/2026",lob:"FollowSpy",email:"otlaxime18@gmail.comm",plan:"Premium Quarterly",status:"Refunded",reason:"Accidental reg quarterly",payment:"VISA",notes:"cx declined the DG with credit offer, wants price diff refunded",reso:"Refund Difference",rep:"Roy",month:"05-2026",amount:82.0},
   {date:"2026-05-20",rawDate:"05/20/2026",created:"10/18/2026",lob:"RecentFollow",email:"siennamcsherry2005@gmail.com",plan:"Expert Quarterly",status:"Refunded",reason:"Accidental reg quarterly",payment:"Other",notes:"cx declined the DG with credit offer, wants price diff refunded",reso:"Refund Difference",rep:"Roy",month:"05-2026",amount:80.0},
   {date:"2026-05-20",rawDate:"05/20/2026",created:"05/18/2026",lob:"FollowSpy",email:"erdenechuluunk@icloud.com",plan:"Premium Weekly",status:"Refunded",reason:"Dispute threat",payment:"ApplePay",notes:"dispute+legal threat, rejected all save offer AWX",reso:"Refunded",rep:"Ben",month:"05-2026",amount:9.0},
   {date:"2026-05-25",rawDate:"05/25/2026",created:"05/11/2026",lob:"FollowSpy",email:"fari-i@outlook.de",plan:"Premium Quarterly",status:"Refunded",reason:"Dispute threat",payment:"Discover",notes:"cx acceptedthe DG offered with price diff refunded, Discover cx",reso:"Refund Difference",rep:"Roy",month:"05-2026",amount:82.0},
-  {date:"2026-05-27",rawDate:"5/27/2026",created:"11/18/2025",lob:"RecentFollow",email:"qbrown1115@gmail.com",plan:"Expert Quarterly",status:"Refunded",reason:"Duplicate",payment:"ApplePay",notes:"dusplicate charge, cx reqeusted refund - awx",reso:"Refunded",rep:"Roy",month:"05-2026",amount:80.0},
+  {date:"2026-05-27",rawDate:"5/27/2026",created:"11/18/2025",lob:"RecentFollow",email:"qbrown1115@gmail.com",plan:"Expert Quarterly",status:"Refunded",reason:"Duplicate",payment:"ApplePay",notes:"dusplicate charge,  cx reqeusted refund - awx",reso:"Refunded",rep:"Roy",month:"05-2026",amount:80.0},
   {date:"2026-05-27",rawDate:"5/27/2026",created:"05/23/2026",lob:"FollowSpy",email:"amandaspears555@gmail.com",plan:"Premium Quarterly",status:"Refunded",reason:"Accepted termination and prorated refund",payment:"VISA",notes:"cx accepted the termination and prorated refund offered",reso:"Prorated Refund",rep:"Roy",month:"05-2026",amount:73.0},
   {date:"2026-05-28",rawDate:"05/28/2026",created:"05/12/2026",lob:"FollowSpy",email:"thibault.thuillier@gmail.com",plan:"Starter Weekly",status:"Refunded",reason:"Dispute threat",payment:"MC",notes:"cx threatened to file dispute, termed and refunded latest charge",reso:"Refunded",rep:"Roy",month:"05-2026",amount:7.0},
   {date:"2026-05-28",rawDate:"5/28/2026",created:"05/21/2026",lob:"FollowSpy",email:"mpunhan783@gmail.com",plan:"Premium Weekly",status:"Refunded",reason:"Dispute threat",payment:"ApplePay",notes:"cx threatened to file dispute, termed and refunded harge",reso:"Refunded",rep:"Roy",month:"05-2026",amount:9.0},
@@ -195,13 +65,13 @@ const DATA = [
   {date:"2026-06-02",rawDate:"06/02/2026",created:"05/31/2026",lob:"FollowSpy",email:"chloe.keli.lee@gmail.com",plan:"Starter Quarterly",status:"Refunded",reason:"Accepted DG to weekly, refund diff",payment:"ApplePay",notes:"cx accepted the DG offered and price diff refunded",reso:"Refund Difference",rep:"Roy",month:"06-2026",amount:64.0},
   {date:"2026-06-02",rawDate:"06/02/2026",created:"06/01/2026",lob:"FollowSpy",email:"Cuteprmami6@yahoo.com",plan:"Starter Weekly",status:"Refunded",reason:"Duplicate",payment:"ApplePay",notes:"refunded duplicate charge",reso:"Refunded",rep:"Roy",month:"06-2026",amount:7.0},
   {date:"2026-06-02",rawDate:"06/02/2026",created:"05/30/2026",lob:"FollowSpy",email:"Luisita.sandoval.87@gmail.com",plan:"Premium Quarterly",status:"Refunded",reason:"Accepted termination and prorated refund",payment:"MC",notes:"cx accepted the term and prorated refund offer - MC",reso:"Prorated Refund",rep:"Roy",month:"06-2026",amount:73.0},
-  {date:"2026-06-02",rawDate:"06/02/2026",created:"06/02/2026",lob:"FollowSpy",email:"comfortmarykay@hotmail.com",plan:"Starter Quarterly",status:"Refunded",reason:"Accepted DG to weekly, refund diff",payment:"VISA",notes:"cx DGeed to weekly, wants price diff refunded",reso:"Refund Difference",rep:"Roy",month:"06-2026",amount:64.0},
+  {date:"2026-06-02",rawDate:"06/02/2026",created:"06/02/2026",lob:"FollowSpy",email:"comfortmarykay@hotmail.com",plan:"Starter Quarterly",status:"Refunded",reason:"Accepted DG to weekly, refund diff",payment:"VISA",notes:"cx  DG'eed to weekly, wants price diff refunded",reso:"Refund Difference",rep:"Roy",month:"06-2026",amount:64.0},
   {date:"2026-06-02",rawDate:"06/02/2026",created:"10/11/2025",lob:"RecentFollow",email:"selina.martinez1996@hotmail.com",plan:"Expert Quarterly",status:"Refunded",reason:"Accepted termination and prorated refund",payment:"ApplePay",notes:"cx accepted the term and prorated refund offer - awx",reso:"Prorated Refund",rep:"Roy",month:"06-2026",amount:72.0},
   {date:"2026-06-03",rawDate:"06/03/2026",created:"05/12/2026",lob:"RecentFollow",email:"alexbcolon@gmail.com",plan:"Starter Weekly",status:"Refunded",reason:"No longer needed",payment:"ApplePay",notes:"cx used wrong email during registration, no option to update email. Term and adv to register",reso:"Refunded",rep:"Roy",month:"06-2026",amount:24.0},
-  {date:"2026-06-03",rawDate:"06/03/2026",created:"11/13/2025",lob:"RecentFollow",email:"celineherrera17@gmail.com",plan:"Elite V1 Weekly",status:"Refunded",reason:"Duplicate",payment:"Other",notes:"cx has duplicate account active in stripe, was charged after canceling the account- refunded recent charge",reso:"Refunded",rep:"Roy",month:"06-2026",amount:8.0},
+  {date:"2026-06-03",rawDate:"06/03/2026",created:"11/13/2025",lob:"RecentFollow",email:"celineherrera17@gmail.com",plan:"Elite V1 Weekly",status:"Refunded",reason:"Duplicate",payment:"Other",notes:"cx has duplicate account active ins tripe, was charged after canceling the account- refunded recent charge",reso:"Refunded",rep:"Roy",month:"06-2026",amount:8.0},
   {date:"2026-06-04",rawDate:"06/04/2026",created:"05/21/2026",lob:"FollowSpy",email:"roxanne.jackson1960@icloud.com",plan:"Starter Quarterly",status:"Refunded",reason:"Dispute threat",payment:"VISA",notes:"cx downgraded the plan to weekly and wants price diff refunded",reso:"Refund Difference",rep:"Roy",month:"06-2026",amount:73.0},
   {date:"2026-06-05",rawDate:"06/05/2026",created:"05/24/2026",lob:"FollowSpy",email:"Jerson.madrid23Yoo@gmail.com",plan:"Premium Quarterly",status:"Refunded",reason:"Dispute threat",payment:"MC",notes:"cx accepted the term and prorated refund offered",reso:"Prorated Refund",rep:"Roy",month:"06-2026",amount:73.0},
-  {date:"2026-06-05",rawDate:"06/05/2026",created:"2/28/2026",lob:"RecentFollow",email:"Dayajordan10@gmail.com",plan:"Expert Quarterly",status:"Refunded",reason:"Accepted DG to weekly, refund diff",payment:"VISA",notes:"Cx was asking for refund, declined credit offer and later on accepted to downgrade the plan and have refund, escalated for refund",reso:"Refund Difference",rep:"Geal",month:"06-2026",amount:80.0},
+  {date:"2026-06-05",rawDate:"06/05/2026",created:"2/28/2026",lob:"RecentFollow",email:"Dayajordan10@gmail.com",plan:"Expert Quarterly",status:"Refunded",reason:"Accepted DG to weekly, refund diff",payment:"VISA",notes:"Cx was asking for refund, declined credit offer and later on accepted to downgrade hte plan and have refund, escalated for refund",reso:"Refund Difference",rep:"Geal",month:"06-2026",amount:80.0},
   {date:"2026-06-08",rawDate:"06/08/2026",created:"06/07/2026",lob:"FollowSpy",email:"a4756800@gmail.com",plan:"Premium Quarterly",status:"Refunded",reason:"Accepted DG to weekly, refund diff",payment:"ApplePay",notes:"cx declined the DG with credit offer, wants price diff refunded",reso:"Refund Difference",rep:"Roy",month:"06-2026",amount:82.0},
   {date:"2026-06-08",rawDate:"06/08/2026",created:"06/05/2026",lob:"RecentFollow",email:"Meaghanestes@hotmail.com",plan:"Expert Weekly",status:"Refunded",reason:"Dispute threat",payment:"ApplePay",notes:"cx declined save offers, want full refund - awx",reso:"Refunded",rep:"Roy",month:"06-2026",amount:8.0},
   {date:"2026-06-08",rawDate:"06/08/2026",created:"05/24/2026",lob:"FollowSpy",email:"schmiederer@mail.ru",plan:"Starter Quarterly",status:"Refunded",reason:"Accidental upgrade quarterly",payment:"ApplePay",notes:"cx declined save offers, want full refund - awx",reso:"Refund Difference",rep:"Roy",month:"06-2026",amount:64.0},
@@ -210,38 +80,38 @@ const DATA = [
   {date:"2026-06-09",rawDate:"06/09/2026",created:"06/06/2026",lob:"RecentFollow",email:"shanyacruz757@gmail.com",plan:"Expert Quarterly",status:"Refunded",reason:"Accepted DG to weekly, refund diff",payment:"Other",notes:"cx accepted the term and prorated refund offered",reso:"Prorated Refund",rep:"Roy",month:"06-2026",amount:72.0},
   {date:"2026-06-10",rawDate:"06/10/2026",created:"05/29/2026",lob:"RecentFollow",email:"echin9991@gmail.com",plan:"Expert Quarterly",status:"Refunded",reason:"Accepted DG to weekly, refund diff",payment:"VISA",notes:"cx accepted the DG to weekly and refund price diff - awx",reso:"Refund Difference",rep:"Roy",month:"06-2026",amount:80.0},
   {date:"2026-06-10",rawDate:"06/10/2026",created:"05/22/2026",lob:"FollowSpy",email:"diana.cuadros0912@gmail.com",plan:"Standard Annual",status:"Refunded",reason:"Accepted termination and prorated refund",payment:"VISA",notes:"awx - cx accepted the term and 50% refund offered",reso:"50% Refund",rep:"Roy",month:"06-2026",amount:59.0},
-  {date:"2026-06-11",rawDate:"06/11/2026",created:"02/25/2026",lob:"FollowSpy",email:"alinaalexandra.eremia@gmail.com",plan:"Premium Lifetime",status:"Refunded",reason:"Accepted termination and prorated refund",payment:"GooglePay",notes:"cx accepted the term and deduct 1 week charge offer mentioned dispute charge threat",reso:"Refund Difference",rep:"Roy",month:"06-2026",amount:81.87},
+  {date:"2026-06-11",rawDate:"06/11/2026",created:"02/25/2026",lob:"FollowSpy",email:"alinaalexandra.eremia@gmail.com",plan:"Premium Lifetime",status:"Refunded",reason:"Accepted termination and prorated refund",payment:"GooglePay",notes:"cx  accepted the term and deduct 1 week charge offer mentioned dispute charge threat",reso:"Refund Difference",rep:"Roy",month:"06-2026",amount:81.87},
   {date:"2026-06-12",rawDate:"06/12/2026",created:"06/12/2026",lob:"FollowSpy",email:"morganjohnson3657@yahoo.com",plan:"Starter Weekly",status:"Refunded",reason:"Dispute threat",payment:"ApplePay",notes:"awx - declined save offers, wants refund threaten to call their bank",reso:"Refunded",rep:"Roy",month:"06-2026",amount:7.0},
-  {date:"2026-06-12",rawDate:"06/12/2026",created:"06/11/2026",lob:"FollowSpy",email:"aidan2018mitchell@gmail.com",plan:"Starter Quarterly",status:"Refunded",reason:"Accepted Prorated Refund Quarterly Save",payment:"VISA",notes:"cx accidentally subcribed to quarterly plan - wants $10 credit, refunded",reso:"Prorated Refund",rep:"Roy",month:"06-2026",amount:10.0},
+  {date:"2026-06-12",rawDate:"06/12/2026",created:"06/11/2026",lob:"FollowSpy",email:"aidan2018mitchell@gmail.com",plan:"Starter Quarterly",status:"Refunded",reason:"Accepted Prorated Refund Quarterly Save",payment:"VISA",notes:"cx  accidentally subcribed to quarterly plan - wants $10 credit, refunded",reso:"Prorated Refund",rep:"Roy",month:"06-2026",amount:10.0},
   {date:"2026-06-12",rawDate:"06/12/2026",created:"01/29/2026",lob:"FollowSpy",email:"segolene.bethune@gmail.com",plan:"Premium Quarterly",status:"Refunded",reason:"Accepted DG to weekly, refund diff",payment:"ApplePay",notes:"awx- cx accepted the DG to weekly and price diff refnunded offered, threatened to dispute if refund is not processed",reso:"Refund Difference",rep:"Roy",month:"06-2026",amount:78.46},
-  {date:"2026-06-12",rawDate:"06/12/2026",created:"10/16/2025",lob:"RecentFollow",email:"bswoodyy@gmail.com",plan:"Expert Quarterly",status:"Refunded",reason:"Accidental upgrade quarterly",payment:"VISA",notes:"cx said that they are not aware of the charge, asking for full refund. offered retention but they canceled and does not want to reactivate. offered termination of account with partial refund. we collected 1 week of service",reso:"Prorated Refund",rep:"Geal",month:"06-2026",amount:72.0},
+  {date:"2026-06-12",rawDate:"06/12/2026",created:"10/16/2025",lob:"RecentFollow",email:"bswoodyy@gmail.com",plan:"Expert Quarterly",status:"Refunded",reason:"Accidental upgrade quarterly",payment:"VISA",notes:"cx said that they are not aware of the charge, asking for full refund. offered retention but they canceled and does not want to reactivate. offered termination of account  with partial refund. we collected 1 week of service",reso:"Prorated Refund",rep:"Geal",month:"06-2026",amount:72.0},
   {date:"2026-06-15",rawDate:"06/15/2026",created:"02/25/2026",lob:"RecentFollow",email:"chaddney@gmail.com",plan:"Expert Weekly",status:"Refunded",reason:"Duplicate",payment:"AMEX",notes:"duplicate charge/subs, unable to see active plan when logging in. active plan not sync in db, cx is askin for refund canceled in db - refunded last 2 recent charges",reso:"Refunded",rep:"Roy",month:"06-2026",amount:16.0},
   {date:"2026-06-15",rawDate:"06/15/2026",created:"04/30/2026",lob:"FollowSpy",email:"wiwq5046@gmail.com",plan:"Premium Quarterly",status:"Refunded",reason:"Accepted DG to weekly, refund diff",payment:"MC",notes:"cx accepted the DG to weekly and refund price diff - mc",reso:"Refund Difference",rep:"Roy",month:"06-2026",amount:76.59},
-  {date:"2026-06-15",rawDate:"06/15/2026",created:"06/14/2026",lob:"RecentFollow",email:"atochterman00@gmail.com",plan:"Expert Quarterly",status:"Refunded",reason:"Accepted DG to weekly, refund diff",payment:"MC",notes:"cx accepted the DG to weekly and refund price diff - mc",reso:"Refund Difference",rep:"Roy",month:"06-2026",amount:79.6},
-  {date:"2026-06-15",rawDate:"06/15/2026",created:"06/12/2026",lob:"FollowSpy",email:"wajeehanaz1991@gmail.com",plan:"Premium Quarterly",status:"Refunded",reason:"Accepted termination and prorated refund",payment:"VISA",notes:"cx accepted the term and prorated refund offered",reso:"Prorated Refund",rep:"Roy",month:"06-2026",amount:3.0},
+  {date:"2026-06-15",rawDate:"06/15/2026",created:"06/14/2026",lob:"RecentFollow",email:"atochterman00@gmail.com",plan:"Expert Quarterly",status:"Refunded",reason:"Accepted DG to weekly, refund diff",payment:"MC",notes:"cx accepted the DG to weekly and refund price diff - mc",reso:"Refund Difference",rep:"Roy",month:"06-2026",amount:0},
+  {date:"2026-06-15",rawDate:"06/15/2026",created:"06/12/2026",lob:"FollowSpy",email:"wajeehanaz1991@gmail.com",plan:"Premium Quarterly",status:"Refunded",reason:"Accepted termination and prorated refund",payment:"VISA",notes:"cx accepted dthe term and prorated refund offered",reso:"Prorated Refund",rep:"Roy",month:"06-2026",amount:3.0},
   {date:"2026-06-16",rawDate:"06/16/2026",created:"06/16/2026",lob:"FollowSpy",email:"batnyamanujin78@gmail.com",plan:"Starter Quarterly",status:"Refunded",reason:"Accepted termination and prorated refund",payment:"Other",notes:"cx accepted the termand 50% refund offered",reso:"50% Refund",rep:"Roy",month:"06-2026",amount:40.95},
   {date:"2026-06-16",rawDate:"06/16/2026",created:"06/13/2026",lob:"RecentFollow",email:"bhillbombase25@gmail.com",plan:"Expert Quarterly",status:"Refunded",reason:"Dispute threat",payment:"VISA",notes:"cx is not aware of the charge on Quarterly plan. declined all save offer and already looped BBB and BSP on their email. Escalated and was advised to term and refund.",reso:"Refunded",rep:"Geal",month:"06-2026",amount:80.0},
   {date:"2026-06-17",rawDate:"06/17/2026",created:"06/16/2026",lob:"RecentFollow",email:"heyitsh4m@gmail.com",plan:"Expert Quarterly",status:"Refunded",reason:"Accepted DG to weekly, refund diff",payment:"VISA",notes:"cx accepted the DG to weekly and price diff refunded",reso:"Refund Difference",rep:"Roy",month:"06-2026",amount:79.46},
   {date:"2026-06-17",rawDate:"06/17/2026",created:"06/05/2026",lob:"RecentFollow",email:"ayoniskillebrew@yahoo.com",plan:"Expert Quarterly",status:"Refunded",reason:"Dispute threat",payment:"VISA",notes:"Cx wants price diff refunded - Airwallex+Dispute threat.",reso:"Refund Difference",rep:"Roy",month:"06-2026",amount:77.57},
   {date:"2026-06-17",rawDate:"06/17/2026",created:"06/17/2026",lob:"FollowSpy",email:"ellainequibol212@gmail.com",plan:"Premium Quarterly",status:"Refunded",reason:"Dispute threat",payment:"MC",notes:"cx wants full refund - declined save offered - threatened to dispute charges MC",reso:"Refunded",rep:"Roy",month:"06-2026",amount:82.0},
   {date:"2026-06-17",rawDate:"06/17/2026",created:"11/21/2025",lob:"RecentFollow",email:"autumnryan01@icloud.com",plan:"Expert Quarterly",status:"Refunded",reason:"Duplicate",payment:"VISA",notes:"cx was charged twice for the same amnt - refunded the duplicate charge",reso:"Refunded",rep:"Roy",month:"06-2026",amount:80.0},
-  {date:"2026-06-18",rawDate:"06/18/2026",created:"06/16/2026",lob:"FollowSpy",email:"veganvalentina@gmail.com",plan:"Premium Quarterly",status:"Refunded",reason:"Accepted DG to weekly, refund diff",payment:"MC",notes:"cx threatens to dispute - dged to weekly and price diff refunded",reso:"Refund Difference",rep:"Roy",month:"06-2026",amount:100.1},
+  {date:"2026-06-18",rawDate:"06/18/2026",created:"06/16/2026",lob:"FollowSpy",email:"veganvalentina@gmail.com",plan:"Premium Quarterly",status:"Refunded",reason:"Accepted DG to weekly, refund diff",payment:"MC",notes:"cx threatens to dispute - dg'ed to weekly and price diff refunded",reso:"Refund Difference",rep:"Roy",month:"06-2026",amount:100.1},
   {date:"2026-06-18",rawDate:"06/18/2026",created:"06/18/2026",lob:"RecentFollow",email:"madeline.75004@gmail.com",plan:"Expert Weekly",status:"Refunded",reason:"Dashboard/System Issue",payment:"ApplePay",notes:"OP and DB does not sync when they signed up -refund and advised to resubscribed",reso:"Refunded",rep:"Jessica",month:"06-2026",amount:8.0},
-  {date:"2026-06-19",rawDate:"06/19/2026",created:"06/17/2026",lob:"FollowSpy",email:"xkayla139x@gmail.com",plan:"Starter Weekly",status:"Refunded",reason:"Dispute threat",payment:"MC",notes:"cx declined save offers - threatened to dispute the charge",reso:"Refunded",rep:"Roy",month:"06-2026",amount:9.0},
+  {date:"2026-06-19",rawDate:"06/19/2026",created:"06/17/2026",lob:"FollowSpy",email:"xkayla139x@gmail.com",plan:"Starter Weekly",status:"Refunded",reason:"Dispute threat",payment:"MC",notes:"cx  declined save offers - threatened to dispute the charge",reso:"Refunded",rep:"Roy",month:"06-2026",amount:9.0},
   {date:"2026-06-19",rawDate:"06/19/2026",created:"06/19/2026",lob:"FollowSpy",email:"masseyjames128@gmail.com",plan:"Starter Weekly",status:"Refunded",reason:"Duplicate",payment:"ApplePay",notes:"cx has duplicate accounts",reso:"Refunded",rep:"Roy",month:"06-2026",amount:9.0},
   {date:"2026-06-19",rawDate:"06/19/2026",created:"1/7/2026",lob:"RecentFollow",email:"Taylor.natoli@gmail.com",plan:"Expert Weekly",status:"Refunded",reason:"Duplicate",payment:"ApplePay",notes:"cx was charged twice, duplicate sub, cx said that they already canceled but was charged again. Airwallex, term and refunded the most recent charge",reso:"Refunded",rep:"Geal",month:"06-2026",amount:8.0},
   {date:"2026-06-19",rawDate:"06/19/2026",created:"06/19/2026",lob:"FollowSpy",email:"martugonzaaleez@gmail.com",plan:"Premium Weekly",status:"Refunded",reason:"No longer needed",payment:"VISA",notes:"accidental purchase, insisted to have refund, - Airwallex. Term and refunded in db",reso:"Refunded",rep:"Geal",month:"06-2026",amount:10.0},
   {date:"2026-06-20",rawDate:"06/20/2026",created:"10/13/2026",lob:"RecentFollow",email:"kacylraffs@gmail.com",plan:"Expert Weekly",status:"Refunded",reason:"Duplicate",payment:"ApplePay",notes:"duplicate subscription, cx was charged but showing canceled as the duplicate subs is not sync in db. term and refunded $16",reso:"Refunded",rep:"Geal",month:"06-2026",amount:16.0},
   {date:"2026-06-20",rawDate:"06/20/2026",created:"10/4/2026",lob:"FollowSpy",email:"voron.zp@gmail.com",plan:"Elite V1 Weekly",status:"Refunded",reason:"Duplicate",payment:"MC",notes:"cx was charged after cancelation. offered refund on the most recent charge. term in stripe",reso:"Refunded",rep:"Geal",month:"06-2026",amount:8.0},
-  {date:"2026-06-22",rawDate:"06/22/2026",created:"06/21/2026",lob:"FollowSpy",email:"johyeonkim77@gmail.com",plan:"Premium Quarterly",status:"Refunded",reason:"Accidental reg quarterly",payment:"MC",notes:"cx accepted the 50% refund + term offer - declined credit offered wants this case to be escalated - mc",reso:"Prorated Refund",rep:"Roy",month:"06-2026",amount:54.5},
-  {date:"2026-06-22",rawDate:"06/22/2026",created:"06/22/2026",lob:"FollowSpy",email:"damininaik@gmail.com",plan:"Starter Quarterly",status:"Refunded",reason:"Rejected save offer",payment:"VISA",notes:"cx accepted the 50% refund + term offer",reso:"Prorated Refund",rep:"Roy",month:"06-2026",amount:36.4},
+  {date:"2026-06-22",rawDate:"06/22/2026",created:"06/21/2026",lob:"FollowSpy",email:"johyeonkim77@gmail.com",plan:"Premium Quarterly",status:"Refunded",reason:"Accidental reg quarterly",payment:"MC",notes:"cx  accepted the 50% refund + term offer - declined credit offered wants this case to be escalated - mc",reso:"Prorated Refund",rep:"Roy",month:"06-2026",amount:54.5},
+  {date:"2026-06-22",rawDate:"06/22/2026",created:"06/22/2026",lob:"FollowSpy",email:"damininaik@gmail.com",plan:"Starter Quarterly",status:"Refunded",reason:"Rejected save offer",payment:"VISA",notes:"cx  accepted the 50% refund + term offer",reso:"Prorated Refund",rep:"Roy",month:"06-2026",amount:36.4},
   {date:"2026-06-22",rawDate:"06/22/2026",created:"06/20/2026",lob:"FollowSpy",email:"lobovictor714@gmail.com",plan:"Premium Weekly",status:"Refunded",reason:"Rejected save offer",payment:"ApplePay",notes:"awx-cx threatened for a chargeback, wants full refund - declined save offers",reso:"Refunded",rep:"Roy",month:"06-2026",amount:11.0},
   {date:"2026-06-22",rawDate:"06/22/2026",created:"06/22/2026",lob:"FollowSpy",email:"hopephillips2000@gmail.com",plan:"Starter Weekly",status:"Refunded",reason:"Dispute threat",payment:"ApplePay",notes:"awx-cx threatened for a chargeback, wants full refund - declined save offers",reso:"Refunded",rep:"Roy",month:"06-2026",amount:10.0},
   {date:"2026-06-23",rawDate:"06/23/2026",created:"06/15/2026",lob:"FollowSpy",email:"antoinnet96@gmail.com",plan:"Premium Weekly",status:"Refunded",reason:"Dispute threat",payment:"MC",notes:"acct was terminated already by the devs - refund not yet processed, cx threatened dispute",reso:"Refunded",rep:"Roy",month:"06-2026",amount:9.0},
   {date:"2026-06-23",rawDate:"06/23/2026",created:"10/09/2025",lob:"RecentFollow",email:"massimo.giamattei9@gmail.com",plan:"Elite V1 Weekly",status:"Refunded",reason:"Dispute threat",payment:"MC",notes:"cx threatens to dispute the charge - declined save offers",reso:"Refunded",rep:"Roy",month:"06-2026",amount:8.0},
   {date:"2026-06-24",rawDate:"06/24/2026",created:"06/19/2026",lob:"FollowSpy",email:"ctfouto@gmail.com",plan:"Premium Quarterly",status:"Refunded",reason:"Dispute threat",payment:"MC",notes:"CX accidentally subcribed to quarterly plan, declined save offers, threatened to dispute the charge - mc",reso:"Prorated Refund",rep:"Roy",month:"06-2026",amount:73.0},
   {date:"2026-06-29",rawDate:"06/29/2026",created:"01/27/2026",lob:"RecentFollow",email:"jrl3putt@yahoo.com",plan:"Expert Weekly",status:"Refunded",reason:"Duplicate",payment:"ApplePay",notes:"Duplicate sub. Cx already terminated the acct but still has active OP sub. Term/refunded OP duplicate acct",reso:"Refunded",rep:"Ben",month:"06-2026",amount:8.0},
-  {date:"2026-06-29",rawDate:"06/29/2026",created:"6/23/2026",lob:"FollowSpy",email:"deneilr05@gmail.com",plan:"Premium Weekly",status:"Refunded",reason:"Dashboard/System Issue",payment:"VISA",notes:"no log in and no account in db. term and refunded in OP, advised cx to reregister",reso:"Refunded",rep:"Geal",month:"06-2026",amount:10.0},
+  {date:"2026-06-29",rawDate:"06/29/2026",created:"6/23/2026",lob:"FollowSpy",email:"deneilr05@gmail.com",plan:"Premium Weekly",status:"Refunded",reason:"Dashboard/System Issue",payment:"VISA",notes:"no log in  and no account in db. term and refunded in OP, advised cx to reregister",reso:"Refunded",rep:"Geal",month:"06-2026",amount:10.0},
   {date:"2026-06-29",rawDate:"06/29/2026",created:"06/28/2026",lob:"RecentFollow",email:"skabalmonte05@gmail.com",plan:"Expert Weekly",status:"Refunded",reason:"Duplicate",payment:"ApplePay",notes:"cannot access the account, cx has duplicate account. and they were charged twice. term and refunded duplicate subs",reso:"Refunded",rep:"Geal",month:"06-2026",amount:9.0},
   {date:"2026-06-29",rawDate:"06/29/2026",created:"5/17/2026",lob:"RecentFollow",email:"(no email on file)",plan:"Expert Weekly",status:"Refunded",reason:"Duplicate",payment:"MC",notes:"refunded the last 3 duplicate charges",reso:"Prorated Refund",rep:"Geal",month:"06-2026",amount:24.0},
   {date:"2026-06-30",rawDate:"06/30/2026",created:"06/29/2026",lob:"FollowSpy",email:"maryamjoe222@gmail.com",plan:"Premium Weekly",status:"Refunded",reason:"Dispute threat",payment:"ApplePay",notes:"Airwallex, dispute threat, rejected pushback",reso:"Refunded",rep:"Ben",month:"06-2026",amount:11.0},
@@ -249,188 +119,11 @@ const DATA = [
   {date:"2026-07-01",rawDate:"07/01/2026",created:"06/30/2026",lob:"FollowSpy",email:"dmitrikim@naver.com",plan:"Premium Quarterly",status:"Refunded",reason:"Dashboard/System Issue",payment:"VISA",notes:"Reg for Prem Quarterly, but was charged more that the quarterly plan",reso:"Prorated Refund",rep:"Ben",month:"07-2026",amount:118.0},
   {date:"2026-07-01",rawDate:"07/01/2026",created:"07/01/2026",lob:"RecentFollow",email:"laquantearaj@gmail.com",plan:"Expert Quarterly",status:"Refunded",reason:"Accepted DG to weekly, refund diff",payment:"Discover",notes:"awx- cx accepted the DG to weekly and price diff refnunded offered",reso:"Refund Difference",rep:"Jessica",month:"07-2026",amount:80.0},
   {date:"2026-07-03",rawDate:"07/03/2026",created:"07/03/2026",lob:"FollowSpy",email:"crystal@crystalfambrini.com",plan:"Premium Quarterly",status:"Refunded",reason:"Rejected save offer",payment:"ApplePay",notes:"awx - cx declined the save offers, threateing to repost to bank",reso:"Refunded",rep:"Roy",month:"07-2026",amount:91.0},
-  {date:"2026-07-03",rawDate:"07/03/2026",created:"10/09/2025",lob:"RecentFollow",email:"Matthew.seligman@gmail.com",plan:"Elite V1 Weekly",status:"Refunded",reason:"Dispute threat",payment:"MC",notes:"cx unable to cancel on their end, requesting refnd, declined save offers, hhreatens to file dispute",reso:"Refunded",rep:"Roy",month:"07-2026",amount:8.0},
+  {date:"2026-07-03",rawDate:"07/03/2026",created:"10/09/2025",lob:"RecentFollow",email:"Matthew.seligman@gmail.com",plan:"Elite V1 Weekly",status:"Refunded",reason:"Dispute threat",payment:"MC",notes:"cx unable to cancel on their end, requesting refnd , declined save offers, hhreatens to file dispute",reso:"Refunded",rep:"Roy",month:"07-2026",amount:8.0},
   {date:"2026-07-05",rawDate:"07/05/2026",created:"07/02/2026",lob:"FollowSpy",email:"markeaquino.84@gmail.com",plan:"Premium Quarterly",status:"Refunded",reason:"Duplicate",payment:"VISA",notes:"cx had duplicate subscription, premium weekly and premium quarterly, cx confirmed that they only needed the weekly plan. term and refunded quarterly plan in OP. escalated as the account is not reflecting in db",reso:"Refunded",rep:"Geal",month:"07-2026",amount:91.0},
-  {date:"2026-07-06",rawDate:"07/06/2026",created:"07/05/2026",lob:"FollowSpy",email:"dedid99019@lovadio.com",plan:"Starter Quarterly",status:"Refunded",reason:"Accidental reg quarterly",payment:"VISA",notes:"cx declined the $10 credit offered, wants $10 refunded",reso:"Refunded",rep:"Roy",month:"07-2026",amount:10.0},
+  {date:"2026-07-06",rawDate:"07/06/2026",created:"07/05/2026",lob:"FollowSpy",email:"dedid99019@lovadio.com",plan:"Starter Quarterly",status:"Refunded",reason:"Accidental reg quarterly",payment:"VISA",notes:"cx declined the $10c redit offered, wants $10 refunded",reso:"Refunded",rep:"Roy",month:"07-2026",amount:10.0},
   {date:"2026-07-07",rawDate:"07/07/2026",created:"07/07/2026",lob:"FollowSpy",email:"nataliasirek@gmail.com",plan:"Premium Weekly",status:"Refunded",reason:"Rejected save offer",payment:"ApplePay",notes:"awx - cx requested refund, decliend save offers",reso:"Refunded",rep:"Roy",month:"07-2026",amount:14.0},
   {date:"2026-07-10",rawDate:"07/10/2026",created:"11/09/2025",lob:"RecentFollow",email:"bleujimiprojects@gmail.com",plan:"Expert Weekly",status:"Refunded",reason:"Duplicate",payment:"MC",notes:"cx wants duplicate charge to be refunded and cancled",reso:"Refunded",rep:"Roy",month:"07-2026",amount:8.0},
-  {date:"2026-07-10",rawDate:"07/10/2026",created:"07/02/2026",lob:"RecentFollow",email:"arionnaalgarin@gmail.com",plan:"Expert Weekly",status:"Refunded",reason:"Dispute threat",payment:"ApplePay",notes:"-most recent charge has been refunded - airwallex",reso:"Refunded",rep:"Geal",month:"07-2026",amount:11.0}
-];
-
-let charts = {};
-let sortCol = 'date', sortDir = 1;
-
-function getFiltered() {
-  const from = document.getElementById('dateFrom').value;
-  const to = document.getElementById('dateTo').value;
-  const lob = document.getElementById('filterLob').value;
-  const reso = document.getElementById('filterReso').value;
-  const reason = document.getElementById('filterReason').value;
-  const payment = document.getElementById('filterPayment').value;
-  const rep = document.getElementById('filterRep').value;
-  return DATA.filter(r => {
-    if (from && r.date < from) return false;
-    if (to && r.date > to) return false;
-    if (lob && r.lob !== lob) return false;
-    if (reso && r.reso !== reso) return false;
-    if (reason && r.reason !== reason) return false;
-    if (payment && r.payment !== payment) return false;
-    if (rep && r.rep !== rep) return false;
-    return true;
-  });
-}
-
-function count(arr, key) {
-  const m = {};
-  arr.forEach(r => { const v = r[key]||'—'; m[v] = (m[v]||0)+1; });
-  return m;
-}
-
-function topN(obj, n) {
-  return Object.entries(obj).sort((a,b)=>b[1]-a[1]).slice(0,n);
-}
-
-const COLORS = ['#60a5fa','#34d399','#a78bfa','#fb923c','#f472b6','#facc15','#818cf8','#2dd4bf','#f87171','#c084fc'];
-
-function buildChart(id, type, labels, values, opts={}) {
-  const ctx = document.getElementById(id).getContext('2d');
-  if (charts[id]) charts[id].destroy();
-  charts[id] = new Chart(ctx, {
-    type,
-    data: {
-      labels,
-      datasets: [{
-        data: values,
-        backgroundColor: type==='doughnut' ? COLORS : COLORS[0],
-        borderColor: type==='line' ? '#60a5fa' : 'transparent',
-        borderWidth: type==='line' ? 2 : 0,
-        fill: type==='line',
-        tension: 0.4,
-        pointRadius: 3,
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { display: type==='doughnut', position:'right', labels:{color:'#94a3b8',boxWidth:10,font:{size:10}} },
-        tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.y ?? ctx.parsed} cases` } }
-      },
-      scales: type!=='doughnut' ? {
-        x: { ticks:{color:'#64748b',font:{size:10}}, grid:{color:'#1e293b'} },
-        y: { ticks:{color:'#64748b',font:{size:10}}, grid:{color:'#334155'}, beginAtZero:true }
-      } : {},
-      ...opts
-    }
-  });
-}
-
-function resoBadge(v) {
-  const vl = v.toLowerCase();
-  if (vl.includes('refund')) return `<span class="badge badge-refunded">${v}</span>`;
-  if (vl.includes('cancel')) return `<span class="badge badge-canceled">${v}</span>`;
-  if (vl.includes('escalat')) return `<span class="badge badge-escalated">${v}</span>`;
-  if (vl === 'n/a' || !v) return `<span class="badge badge-na">N/A</span>`;
-  if (vl.includes('terminat')) return `<span class="badge badge-terminated">${v}</span>`;
-  return `<span class="badge badge-other">${v}</span>`;
-}
-
-function render() {
-  const filtered = getFiltered();
-  const sorted = [...filtered].sort((a,b) => {
-    const av = a[sortCol]||'', bv = b[sortCol]||'';
-    return av < bv ? -sortDir : av > bv ? sortDir : 0;
-  });
-
-  // KPIs
-  document.getElementById('kTotal').textContent = filtered.length;
-  document.getElementById('kSub').textContent = filtered.length === DATA.length ? 'all records' : `of ${DATA.length} total`;
-  const refunded = filtered.filter(r => r.reso.toLowerCase().includes('refund'));
-  document.getElementById('kRefunded').textContent = refunded.length;
-  document.getElementById('kRefundedAmt').textContent = '$'+refunded.reduce((s,r)=>s+r.amount,0).toFixed(2)+' est.';
-  const fs = filtered.filter(r=>r.lob==='FollowSpy');
-  const rf = filtered.filter(r=>r.lob==='RecentFollow');
-  document.getElementById('kFS').textContent = fs.length;
-  document.getElementById('kFSSub').textContent = '$'+fs.reduce((s,r)=>s+r.amount,0).toFixed(2)+' est.';
-  document.getElementById('kRF').textContent = rf.length;
-  document.getElementById('kRFSub').textContent = '$'+rf.reduce((s,r)=>s+r.amount,0).toFixed(2)+' est.';
-  document.getElementById('kCanceled').textContent = filtered.filter(r=>r.reso.toLowerCase().includes('cancel')).length;
-  document.getElementById('kEscalated').textContent = filtered.filter(r=>r.reso.toLowerCase().includes('escalat')).length;
-  document.getElementById('count').textContent = filtered.length + ' records shown';
-
-  // Charts
-  const reasonMap = count(filtered, 'reason');
-  const topReasons = topN(reasonMap, 8);
-  buildChart('chartReason','bar', topReasons.map(e=>e[0]), topReasons.map(e=>e[1]));
-
-  const resoMap = count(filtered, 'reso');
-  const topReso = topN(resoMap, 10);
-  buildChart('chartReso','doughnut', topReso.map(e=>e[0]), topReso.map(e=>e[1]));
-
-  const payMap = count(filtered, 'payment');
-  const topPay = topN(payMap, 8);
-  buildChart('chartPayment','bar', topPay.map(e=>e[0]), topPay.map(e=>e[1]));
-
-  const dateMap = {};
-  filtered.forEach(r => { if(r.date) dateMap[r.date] = (dateMap[r.date]||0)+1; });
-  const dates = Object.keys(dateMap).sort();
-  buildChart('chartDaily','line', dates.map(d=>d.slice(5)), dates.map(d=>dateMap[d]));
-
-  // Table
-  const tbody = document.getElementById('tbody');
-  tbody.innerHTML = sorted.map(r => `<tr>
-    <td>${r.rawDate}</td>
-    <td>${r.lob==='FollowSpy'?`<span class="lob-fs">FollowSpy</span>`:`<span class="lob-rf">RecentFollow</span>`}</td>
-    <td title="${r.email}">${r.email}</td>
-    <td>${r.plan}</td>
-    <td>${r.reason}</td>
-    <td>${r.payment}</td>
-    <td>${resoBadge(r.reso)}</td>
-    <td>${r.rep}</td>
-    <td title="${r.notes}">${r.notes.slice(0,60)}${r.notes.length>60?'…':''}</td>
-  </tr>`).join('');
-  document.getElementById('tableCount').textContent = `(${sorted.length})`;
-}
-
-function sortBy(col) {
-  if (sortCol === col) sortDir *= -1; else { sortCol = col; sortDir = 1; }
-  render();
-}
-
-function populateFilters() {
-  const selectors = {filterReso:'reso',filterReason:'reason',filterPayment:'payment',filterRep:'rep'};
-  for (const [id, key] of Object.entries(selectors)) {
-    const vals = [...new Set(DATA.map(r=>r[key]).filter(Boolean))].sort();
-    const sel = document.getElementById(id);
-    vals.forEach(v => { const o=document.createElement('option'); o.value=o.textContent=v; sel.appendChild(o); });
-  }
-  // Set default date range
-  const dates = DATA.map(r=>r.date).filter(Boolean).sort();
-  if (dates.length) {
-    document.getElementById('dateFrom').value = dates[0];
-    document.getElementById('dateTo').value = dates[dates.length-1];
-  }
-}
-
-function resetFilters() {
-  document.getElementById('filterLob').value='';
-  document.getElementById('filterReso').value='';
-  document.getElementById('filterReason').value='';
-  document.getElementById('filterPayment').value='';
-  document.getElementById('filterRep').value='';
-  const dates = DATA.map(r=>r.date).filter(Boolean).sort();
-  if (dates.length) {
-    document.getElementById('dateFrom').value = dates[0];
-    document.getElementById('dateTo').value = dates[dates.length-1];
-  }
-  render();
-}
-
-['dateFrom','dateTo','filterLob','filterReso','filterReason','filterPayment','filterRep'].forEach(id => {
-  document.getElementById(id).addEventListener('change', render);
-});
-
-populateFilters();
-render();
-</script>
-</body>
-</html>
+  {date:"2026-07-10",rawDate:"07/10/2026",created:"07/02/2026",lob:"RecentFollow",email:"arionnaalgarin@gmail.com",plan:"Expert Weekly",status:"Refunded",reason:"Dispute threat",payment:"ApplePay",notes:"-most recent charge has been refunded - airwallex",reso:"Refunded",rep:"Geal",month:"07-2026",amount:11.0},
+  {date:"2026-07-13",rawDate:"07/13/2026",created:"7/7/2026",lob:"RecentFollow",email:"bdavis480002@gmail.com",plan:"Expert Quarterly",status:"Refunded",reason:"Dashboard/System Issue",payment:"ApplePay",notes:"cx was complaining about the technical error and is asking for refund. Cx was offered term with 50% partial refund and cx accepted. Term and partially refunded",reso:"Prorated Refund",rep:"Geal",month:"07-2026",amount:45.0}
+];</script>

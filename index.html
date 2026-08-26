@@ -17,7 +17,7 @@
   .filter-group label{font-size:.7rem;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
   .filter-group input,.filter-group select{background:#0f172a;border:1px solid #334155;color:#e2e8f0;padding:6px 10px;border-radius:6px;font-size:.8rem;outline:none;min-width:120px}
   .filter-group input:focus,.filter-group select:focus{border-color:#60a5fa}
-  .filter-group input[type=date]{min-width:130px}
+  .filter-group input[type=month]{min-width:140px}
   .btn-reset{background:#334155;color:#94a3b8;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:.8rem;height:32px;align-self:flex-end}
   .btn-reset:hover{background:#475569;color:#e2e8f0}
   .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;padding:20px 28px}
@@ -64,12 +64,8 @@
 </header>
 <div class="filters">
   <div class="filter-group">
-    <label>Date From</label>
-    <input type="date" id="dateFrom">
-  </div>
-  <div class="filter-group">
-    <label>Date To</label>
-    <input type="date" id="dateTo">
+    <label>Month</label>
+    <input type="month" id="filterMonth">
   </div>
   <div class="filter-group">
     <label>LOB</label>
@@ -552,16 +548,14 @@ let charts = {};
 let sortCol = 'date', sortDir = 1;
 
 function getFiltered() {
-  const from = document.getElementById('dateFrom').value;
-  const to = document.getElementById('dateTo').value;
+  const month = document.getElementById('filterMonth').value; // "YYYY-MM"
   const lob = document.getElementById('filterLob').value;
   const reso = document.getElementById('filterReso').value;
   const reason = document.getElementById('filterReason').value;
   const payment = document.getElementById('filterPayment').value;
   const rep = document.getElementById('filterRep').value;
   return DATA.filter(r => {
-    if (from && r.date < from) return false;
-    if (to && r.date > to) return false;
+    if (month && (!r.date || r.date.slice(0,7) !== month)) return false;
     if (lob && r.lob !== lob) return false;
     if (reso && r.reso !== reso) return false;
     if (reason && r.reason !== reason) return false;
@@ -694,12 +688,9 @@ function populateFilters() {
     const sel = document.getElementById(id);
     vals.forEach(v => { const o=document.createElement('option'); o.value=o.textContent=v; sel.appendChild(o); });
   }
-  // Set default date range
-  const dates = DATA.map(r=>r.date).filter(Boolean).sort();
-  if (dates.length) {
-    document.getElementById('dateFrom').value = dates[0];
-    document.getElementById('dateTo').value = dates[dates.length-1];
-  }
+  // Set default to most recent month
+  const months = [...new Set(DATA.map(r=>r.date&&r.date.slice(0,7)).filter(Boolean))].sort();
+  if (months.length) document.getElementById('filterMonth').value = months[months.length-1];
 }
 
 function resetFilters() {
@@ -708,15 +699,12 @@ function resetFilters() {
   document.getElementById('filterReason').value='';
   document.getElementById('filterPayment').value='';
   document.getElementById('filterRep').value='';
-  const dates = DATA.map(r=>r.date).filter(Boolean).sort();
-  if (dates.length) {
-    document.getElementById('dateFrom').value = dates[0];
-    document.getElementById('dateTo').value = dates[dates.length-1];
-  }
+  const months = [...new Set(DATA.map(r=>r.date&&r.date.slice(0,7)).filter(Boolean))].sort();
+  if (months.length) document.getElementById('filterMonth').value = months[months.length-1];
   render();
 }
 
-['dateFrom','dateTo','filterLob','filterReso','filterReason','filterPayment','filterRep'].forEach(id => {
+['filterMonth','filterLob','filterReso','filterReason','filterPayment','filterRep'].forEach(id => {
   document.getElementById(id).addEventListener('change', render);
 });
 

@@ -1,0 +1,37 @@
+name: Update Refund Dashboard
+
+on:
+  schedule:
+    - cron: '0 9 */2 * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  update-dashboard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Fetch Google Sheet tabs as CSV
+        run: |
+          curl -sL "https://docs.google.com/spreadsheets/d/1xdG1e_PtrduC79xWaHf_D_53-Ktk-gxVAN1PCKEzW9E/export?format=csv&gid=1776830323" -o tracker_new.csv
+          curl -sL "https://docs.google.com/spreadsheets/d/1xdG1e_PtrduC79xWaHf_D_53-Ktk-gxVAN1PCKEzW9E/export?format=csv&gid=2146918456" -o refund_tracker.csv
+      - name: Build dashboard
+        run: python3 scripts/build_dashboard_ci.py tracker_new.csv refund_tracker.csv index.html
+      - name: Commit and push if changed
+        run: |
+          git config user.name "refund-dashboard-bot"
+          git config user.email "actions@github.com"
+          git add index.html
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Auto-update: refresh dashboard data $(date -u +%Y-%m-%d)"
+            git push
+          fi

@@ -62,8 +62,6 @@ def parse_all(rows):
     while i < n:
         row = [c.strip() for c in rows[i]]
         if len(row) >= 3 and row[0] == 'Date' and row[1] == 'Created' and row[2] == 'LOB':
-            has_status = 'Status' in row
-            has_amount = 'Amount' in row
             i += 1
             while i < n:
                 r = [c.strip() for c in rows[i]]
@@ -75,33 +73,17 @@ def parse_all(rows):
                 if len(r) < 8:
                     i += 1
                     continue
-                if has_status:
-                    rec = {
-                        'date': r[0], 'created': r[1], 'lob': r[2], 'email': r[3], 'plan': r[4],
-                        'status': r[5] if len(r) > 5 else '',
-                        'reason': r[6] if len(r) > 6 else '',
-                        'payment': r[7] if len(r) > 7 else '',
-                        'notes': r[8] if len(r) > 8 else '',
-                        'reso': r[9] if len(r) > 9 else '',
-                        'rep': r[10] if len(r) > 10 else '',
-                        'month': r[11] if len(r) > 11 else '',
-                        'amount_str': '',
-                    }
-                elif has_amount:
-                    rec = {
-                        'date': r[0], 'created': r[1], 'lob': r[2], 'email': r[3], 'plan': r[4],
-                        'status': 'Refunded',
-                        'reason': r[5] if len(r) > 5 else '',
-                        'payment': r[7] if len(r) > 7 else '',
-                        'amount_str': r[8] if len(r) > 8 else '',
-                        'notes': r[9] if len(r) > 9 else '',
-                        'reso': r[10] if len(r) > 10 else '',
-                        'rep': r[11] if len(r) > 11 else '',
-                        'month': r[12] if len(r) > 12 else '',
-                    }
-                else:
-                    i += 1
-                    continue
+                rec = {
+                    'date': r[0], 'created': r[1], 'lob': r[2], 'email': r[3], 'plan': r[4],
+                    'status': 'Refunded',
+                    'reason': r[5] if len(r) > 5 else '',
+                    'payment': r[7] if len(r) > 7 else '',
+                    'amount_str': r[8] if len(r) > 8 else '',
+                    'notes': r[9] if len(r) > 9 else '',
+                    'reso': r[10] if len(r) > 10 else '',
+                    'rep': r[11] if len(r) > 11 else '',
+                    'month': r[12] if len(r) > 12 else '',
+                }
                 if rec['date'] and rec['date'] != 'Date':
                     records.append(rec)
                 i += 1
@@ -143,18 +125,17 @@ def inject_data(html, js_data):
     return re.sub(r'const DATA = \[[\s\S]*?\];', js_data, html, count=1)
 
 if __name__ == '__main__':
-    if len(sys.argv) < 4:
-        print("Usage: build_dashboard_ci.py <tracker_new.csv> <refund_tracker.csv> <out_index.html>")
+    if len(sys.argv) < 3:
+        print("Usage: build_dashboard_ci.py <refund_tracker.csv> <out_index.html>")
         sys.exit(1)
-    tracker_new_path, refund_tracker_path, out_path = sys.argv[1], sys.argv[2], sys.argv[3]
+    refund_tracker_path, out_path = sys.argv[1], sys.argv[2]
 
     all_records = []
-    for path in (tracker_new_path, refund_tracker_path):
-        try:
-            rows = read_rows(path)
-            all_records.extend(parse_all(rows))
-        except FileNotFoundError:
-            print(f"warning: {path} not found, skipping")
+    try:
+        rows = read_rows(refund_tracker_path)
+        all_records.extend(parse_all(rows))
+    except FileNotFoundError:
+        print(f"warning: {refund_tracker_path} not found, skipping")
 
     js_data = build_js_data(all_records)
 

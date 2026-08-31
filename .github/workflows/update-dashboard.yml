@@ -18,12 +18,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Fetch Google Sheet tabs as CSV
+      - name: Fetch Google Sheet tab as CSV
         run: |
-          curl -sL "https://docs.google.com/spreadsheets/d/1xdG1e_PtrduC79xWaHf_D_53-Ktk-gxVAN1PCKEzW9E/export?format=csv&gid=1776830323" -o tracker_new.csv
           curl -sL "https://docs.google.com/spreadsheets/d/1xdG1e_PtrduC79xWaHf_D_53-Ktk-gxVAN1PCKEzW9E/export?format=csv&gid=2146918456" -o refund_tracker.csv
       - name: Build dashboard
-        run: python3 scripts/build_dashboard_ci.py tracker_new.csv refund_tracker.csv index.html
+        run: python3 scripts/build_dashboard_ci.py refund_tracker.csv index.html
       - name: Commit and push if changed
         run: |
           git config user.name "refund-dashboard-bot"
